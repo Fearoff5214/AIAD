@@ -93,7 +93,28 @@
       );
 
       const payload = await response.json();
-      result.textContent = JSON.stringify(payload, null, 2);
+
+      if (!response.ok || payload.exc_type) {
+        let message = payload.message || payload.exception || "Unable to create account.";
+        if (payload._server_messages) {
+          try {
+            const serverMessages = JSON.parse(payload._server_messages);
+            if (Array.isArray(serverMessages) && serverMessages.length) {
+              message = serverMessages[0];
+            }
+          } catch (parseError) {
+            message = payload.exception || message;
+          }
+        }
+        result.textContent = String(message).replace(/[\[\]"]/g, "");
+        return;
+      }
+
+      const responseMessage = payload.message || {};
+      result.textContent = "Account created successfully. Redirecting to login...";
+
+      const loginUrl = responseMessage.login_url || "/login?redirect-to=/user-portal";
+      window.location.href = loginUrl;
     } catch (error) {
       result.textContent = `Request failed: ${error.message}`;
     }

@@ -97,6 +97,7 @@ def register_portal_user(full_name, email, password, company_name, industry_type
         "tenant": tenant.name,
         "industry_type": industry_type,
         "enabled_features": TAILORED_FEATURES[industry_type],
+        "login_url": "/login?redirect-to=/user-portal",
     }
 
 
