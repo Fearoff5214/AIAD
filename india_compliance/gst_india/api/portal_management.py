@@ -1,0 +1,274 @@
+import json
+import os
+
+import frappe
+from frappe import _
+from frappe.utils.password import update_password
+
+
+TAILORED_FEATURES = {
+    "Manufacturing": [
+        "Production Order Dashboard",
+        "BOM and Material Planning",
+        "Batch and Inventory Tracking",
+        "GST and E-Invoice Automation",
+    ],
+    "Wholesale": [
+        "Bulk Order Management",
+        "Distributor Pricing Rules",
+        "High-volume Invoicing",
+        "GST and E-Way Bill Automation",
+    ],
+    "Other": [
+        "Customer Management",
+        "Sales and Purchase Tracking",
+        "GST Returns Utilities",
+    ],
+}
+
+
+def _ensure_system_manager():
+    if not frappe.has_permission("Portal Tenant", "write"):
+        frappe.throw(_("Only an administrator can perform this action"), frappe.PermissionError)
+
+
+def _get_tenant_for_user(user):
+    return frappe.db.get_value("Portal Tenant", {"user": user, "is_active": 1}, "name")
+
+
+def _safe_json_dumps(data):
+    return json.dumps(data, ensure_ascii=True)
+
+
+def _log_usage(user, event_type, route=None, metadata=None):
+    if not user or user == "Guest":
+        return
+
+    tenant = _get_tenant_for_user(user)
+    frappe.get_doc(
+        {
+            "doctype": "Portal Usage Log",
+            "user": user,
+            "portal_tenant": tenant,
+            "event_type": event_type,
+            "route": route,
+            "metadata_json": _safe_json_dumps(metadata or {}),
+        }
+    ).insert(ignore_permissions=True)
+
+
+@frappe.whitelist(allow_guest=True)
+def register_portal_user(full_name, email, password, company_name, industry_type, website_slug):
+    if frappe.db.exists("User", email):
+        frappe.throw(_("A user with this email already exists"))
+
+    industry_type = (industry_type or "Other").strip().title()
+    if industry_type not in TAILORED_FEATURES:
+        industry_type = "Other"
+
+    user = frappe.get_doc(
+        {
+            "doctype": "User",
+            "email": email,
+            "first_name": full_name,
+            "enabled": 1,
+            "new_password": password,
+            "send_welcome_email": 0,
+            "user_type": "Website User",
+        }
+    )
+    user.insert(ignore_permissions=True)
+
+    tenant = frappe.get_doc(
+        {
+            "doctype": "Portal Tenant",
+            "company_name": company_name,
+            "industry_type": industry_type,
+            "website_slug": website_slug,
+            "user": email,
+            "enabled_features_json": _safe_json_dumps(TAILORED_FEATURES[industry_type]),
+            "is_active": 1,
+        }
+    )
+    tenant.insert(ignore_permissions=True)
+
+    return {
+        "message": "Account created successfully",
+        "tenant": tenant.name,
+        "industry_type": industry_type,
+        "enabled_features": TAILORED_FEATURES[industry_type],
+    }
+
+
+@frappe.whitelist()
+def get_my_portal_features():
+    if frappe.session.user == "Guest":
+        frappe.throw(_("Login required"), frappe.PermissionError)
+
+    tenant_name = _get_tenant_for_user(frappe.session.user)
+    if not tenant_name:
+        return {"tenant": None, "enabled_features": []}
+
+    tenant = frappe.get_doc("Portal Tenant", tenant_name)
+    _log_usage(
+        frappe.session.user,
+        event_type="feature_access",
+        route="/api/method/india_compliance.gst_india.api.portal_management.get_my_portal_features",
+        metadata={"tenant": tenant_name},
+    )
+
+    return {
+        "tenant": tenant.name,
+        "company_name": tenant.company_name,
+        "industry_type": tenant.industry_type,
+        "assigned_admin": tenant.assigned_admin,
+        "enabled_features": json.loads(tenant.enabled_features_json or "[]"),
+    }
+
+
+@frappe.whitelist()
+def assign_admin_to_tenant(tenant_name, admin_user):
+    _ensure_system_manager()
+
+    if not frappe.db.exists("Portal Tenant", tenant_name):
+        frappe.throw(_("Portal Tenant not found"))
+
+    if not frappe.db.exists("User", admin_user):
+        frappe.throw(_("Admin user does not exist"))
+
+    tenant = frappe.get_doc("Portal Tenant", tenant_name)
+    tenant.assigned_admin = admin_user
+    tenant.save(ignore_permissions=True)
+
+    _log_usage(
+        frappe.session.user,
+        event_type="assign_admin",
+        route="/api/method/india_compliance.gst_india.api.portal_management.assign_admin_to_tenant",
+        metadata={"tenant": tenant_name, "admin_user": admin_user},
+    )
+
+    return {"message": _("Admin assigned"), "tenant": tenant_name, "admin_user": admin_user}
+
+
+@frappe.whitelist()
+def grant_admin_access(user_email, role="System Manager"):
+    _ensure_system_manager()
+
+    if not frappe.db.exists("User", user_email):
+        frappe.throw(_("User does not exist"))
+
+    user = frappe.get_doc("User", user_email)
+    user.add_roles(role)
+
+    _log_usage(
+        frappe.session.user,
+        event_type="grant_admin_access",
+        route="/api/method/india_compliance.gst_india.api.portal_management.grant_admin_access",
+        metadata={"target_user": user_email, "role": role},
+    )
+
+    return {"message": _("Admin access granted"), "user": user_email, "role": role}
+
+
+@frappe.whitelist()
+def track_usage(event_type, route=None, metadata_json=None):
+    if frappe.session.user == "Guest":
+        frappe.throw(_("Login required"), frappe.PermissionError)
+
+    metadata = {}
+    if metadata_json:
+        metadata = json.loads(metadata_json)
+
+    _log_usage(
+        frappe.session.user,
+        event_type=event_type,
+        route=route,
+        metadata=metadata,
+    )
+
+    return {"message": _("Usage tracked")}
+
+
+@frappe.whitelist()
+def list_portal_users(industry_type=None):
+    _ensure_system_manager()
+
+    filters = {"is_active": 1}
+    if industry_type:
+        filters["industry_type"] = industry_type.strip().title()
+
+    return frappe.get_all(
+        "Portal Tenant",
+        fields=["name", "company_name", "industry_type", "user", "assigned_admin", "is_active"],
+        filters=filters,
+        order_by="modified desc",
+    )
+
+
+def ensure_create_account_nav_item():
+    settings = frappe.get_single("Website Settings")
+
+    for item in settings.get("top_bar_items"):
+        if (item.label or "").strip().lower() == "create account":
+            item.url = "/user-register"
+            item.right = 0
+            item.open_in_new_tab = 0
+            settings.save(ignore_permissions=True)
+            return {
+                "message": _("Create Account navigation ensured"),
+                "updated": True,
+            }
+
+    settings.append(
+        "top_bar_items",
+        {
+            "label": "Create Account",
+            "url": "/user-register",
+            "right": 0,
+            "open_in_new_tab": 0,
+        },
+    )
+    settings.save(ignore_permissions=True)
+
+    return {
+        "message": _("Create Account navigation ensured"),
+        "updated": True,
+    }
+
+
+def ensure_primary_admin_account():
+    email = os.getenv("PRIMARY_ADMIN_EMAIL", "parameshlogaa@gmail.com").strip().lower()
+    password = os.getenv("PRIMARY_ADMIN_PASSWORD", "PE42026")
+    full_name = os.getenv("PRIMARY_ADMIN_NAME", "Paramesh Logaa")
+
+    if frappe.db.exists("User", email):
+        user = frappe.get_doc("User", email)
+        user.enabled = 1
+        user.first_name = full_name
+        user.user_type = "System User"
+        user.save(ignore_permissions=True)
+    else:
+        user = frappe.get_doc(
+            {
+                "doctype": "User",
+                "email": email,
+                "first_name": full_name,
+                "enabled": 1,
+                "new_password": password,
+                "send_welcome_email": 0,
+                "user_type": "System User",
+            }
+        )
+        user.insert(ignore_permissions=True)
+
+    user.add_roles("System Manager")
+    update_password(email, password)
+
+    for tenant_name in frappe.get_all("Portal Tenant", filters={"is_active": 1}, pluck="name"):
+        tenant = frappe.get_doc("Portal Tenant", tenant_name)
+        tenant.assigned_admin = email
+        tenant.save(ignore_permissions=True)
+
+    ensure_create_account_nav_item()
+
+    return {"message": _("Primary admin account ensured"), "email": email}

@@ -90,6 +90,10 @@ Once you've [set up a Frappe site](https://frappeframework.com/docs/v14/user/en/
        
     5. Let the Host Site have the default value unless asked to change by the organization.
 
+  ## Setup And Startup Guide
+
+  For the current multi-tenant deployment flow, account creation, and server startup steps, see [SETUP_AND_STARTUP.md](SETUP_AND_STARTUP.md).
+
         
 ## Functionalities
 

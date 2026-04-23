@@ -1,0 +1,279 @@
+<div class="portal-shell">
+  <div class="portal-nav">
+    <a href="/user-register">Create Account</a>
+    <a href="/user-portal">User Portal</a>
+    <a href="/admin-user-management">Admin Page</a>
+  </div>
+
+  <h1>Admin User Management</h1>
+  <p>Manage linked tenants, assign admins, and grant admin access roles.</p>
+
+  {% if not is_system_manager %}
+  <p>You need administrator access to view this page.</p>
+  {% else %}
+  <button id="refresh-users">Refresh Users</button>
+  <pre id="users-result"></pre>
+
+  <h3>Assign Admin To Tenant</h3>
+  <form id="assign-admin-form">
+    <input name="tenant_name" placeholder="Portal Tenant Name" required>
+    <input name="admin_user" placeholder="admin@example.com" required>
+    <button type="submit">Assign</button>
+  </form>
+
+  <h3>Grant Admin Access</h3>
+  <form id="grant-admin-form">
+    <input name="user_email" placeholder="user@example.com" required>
+    <input name="role" value="System Manager" required>
+    <button type="submit">Grant</button>
+  </form>
+
+  <hr>
+  <h3>Integrated GST Copilot</h3>
+  <p>Use AI GST guidance directly inside admin controls.</p>
+
+  <div id="suggested" class="suggested-row"></div>
+  <div id="chat" class="chat-box"></div>
+
+  <form id="chat-form" class="input-row">
+    <input id="question" type="text" placeholder="Ask GST compliance question..." autocomplete="off" required>
+    <button type="button" id="voice-btn">Voice</button>
+    <button type="submit">Send</button>
+  </form>
+  {% endif %}
+</div>
+
+<style>
+  .portal-shell {
+    max-width: 980px;
+    margin: 18px auto;
+    padding: 10px;
+  }
+
+  .portal-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .portal-nav a {
+    text-decoration: none;
+    border: 1px solid #b9c9ea;
+    background: #ecf2ff;
+    color: #1d3f78;
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 14px;
+  }
+
+  .suggested-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 8px 0;
+  }
+
+  .suggested-btn {
+    border: 1px solid #b9c9ea;
+    background: #ecf2ff;
+    color: #1d3f78;
+    border-radius: 999px;
+    padding: 6px 10px;
+    cursor: pointer;
+  }
+
+  .chat-box {
+    min-height: 220px;
+    max-height: 420px;
+    overflow-y: auto;
+    padding: 10px;
+    background: #f6f9ff;
+    border: 1px solid #d9e1ef;
+    border-radius: 8px;
+  }
+
+  .bubble {
+    margin: 8px 0;
+    padding: 8px 10px;
+    border-radius: 8px;
+    max-width: 85%;
+    white-space: pre-wrap;
+  }
+
+  .assistant {
+    background: #eaf2ff;
+    border: 1px solid #cfdcf6;
+  }
+
+  .user {
+    background: #e9f8ee;
+    border: 1px solid #caecd8;
+    margin-left: auto;
+  }
+
+  .input-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .input-row input,
+  .input-row button {
+    padding: 9px;
+    border: 1px solid #d9e1ef;
+    border-radius: 8px;
+  }
+
+  @media (max-width: 700px) {
+    .input-row {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script>
+  const usersResult = document.getElementById("users-result");
+  const chatBox = document.getElementById("chat");
+  const form = document.getElementById("chat-form");
+  const questionInput = document.getElementById("question");
+  const suggestedEl = document.getElementById("suggested");
+  const voiceBtn = document.getElementById("voice-btn");
+
+  async function callApi(method, body) {
+    const response = await fetch(`/api/method/${method}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body || {})
+    });
+    return response.json();
+  }
+
+  async function refreshUsers() {
+    const data = await callApi("india_compliance.gst_india.api.portal_management.list_portal_users");
+    usersResult.textContent = JSON.stringify(data, null, 2);
+  }
+
+  function addBubble(text, role) {
+    if (!chatBox) return;
+    const el = document.createElement("div");
+    el.className = `bubble ${role}`;
+    el.textContent = text;
+    chatBox.appendChild(el);
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+
+  async function loadSuggestions() {
+    if (!suggestedEl) return;
+    const res = await fetch("/api/method/india_compliance.gst_india.api.gst_copilot.gst_copilot_suggested_questions");
+    const data = await res.json();
+    const questions = (data.message && data.message.questions) || [];
+
+    suggestedEl.innerHTML = "";
+    questions.forEach((q) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "suggested-btn";
+      btn.textContent = q;
+      btn.onclick = () => {
+        questionInput.value = q;
+        form.requestSubmit();
+      };
+      suggestedEl.appendChild(btn);
+    });
+  }
+
+  async function askQuestion(question) {
+    addBubble(question, "user");
+    addBubble("Thinking...", "assistant");
+    const thinkingBubble = chatBox.lastElementChild;
+
+    const res = await fetch("/api/method/india_compliance.gst_india.api.gst_copilot.gst_copilot_chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question })
+    });
+
+    const data = await res.json();
+    const answer = (data.message && data.message.answer) || "No response received.";
+    thinkingBubble.textContent = answer;
+
+    await callApi("india_compliance.gst_india.api.portal_management.track_usage", {
+      event_type: "copilot_chat",
+      route: "/admin-user-management",
+      metadata_json: JSON.stringify({ source: "admin_portal_inline" })
+    });
+  }
+
+  const refreshButton = document.getElementById("refresh-users");
+  if (refreshButton) {
+    refreshButton.addEventListener("click", refreshUsers);
+    refreshUsers();
+  }
+
+  const assignForm = document.getElementById("assign-admin-form");
+  if (assignForm) {
+    assignForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const payload = Object.fromEntries(new FormData(assignForm));
+      const result = await callApi(
+        "india_compliance.gst_india.api.portal_management.assign_admin_to_tenant",
+        payload
+      );
+      usersResult.textContent = JSON.stringify(result, null, 2);
+      refreshUsers();
+    });
+  }
+
+  const grantForm = document.getElementById("grant-admin-form");
+  if (grantForm) {
+    grantForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const payload = Object.fromEntries(new FormData(grantForm));
+      const result = await callApi(
+        "india_compliance.gst_india.api.portal_management.grant_admin_access",
+        payload
+      );
+      usersResult.textContent = JSON.stringify(result, null, 2);
+    });
+  }
+
+  if (form) {
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const question = questionInput.value.trim();
+      if (!question) return;
+      questionInput.value = "";
+
+      try {
+        await askQuestion(question);
+      } catch (error) {
+        addBubble(`Error: ${error.message}`, "assistant");
+      }
+    });
+
+    voiceBtn.addEventListener("click", () => {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        addBubble("Voice input is not supported in this browser.", "assistant");
+        return;
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.lang = "en-IN";
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+      recognition.onresult = (event) => {
+        questionInput.value = event.results[0][0].transcript;
+      };
+      recognition.onerror = () => {
+        addBubble("Voice input failed. Please type your question.", "assistant");
+      };
+      recognition.start();
+    });
+
+    addBubble("Hello admin. Ask me about India GST compliance.", "assistant");
+    loadSuggestions();
+  }
+</script>

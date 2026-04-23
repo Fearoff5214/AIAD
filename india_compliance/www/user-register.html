@@ -1,0 +1,101 @@
+<div class="portal-shell">
+  <h1>Create Your Business Account</h1>
+  <p>Register a user-side account linked to the admin-managed Fearoff AIAD portal.</p>
+
+  <form id="register-form" class="portal-form">
+    <label>Full Name
+      <input type="text" name="full_name" required>
+    </label>
+
+    <label>Email
+      <input type="email" name="email" required>
+    </label>
+
+    <label>Password
+      <input type="password" name="password" required>
+    </label>
+
+    <label>Company Name
+      <input type="text" name="company_name" required>
+    </label>
+
+    <label>Industry Type
+      <select name="industry_type" required>
+        <option value="Manufacturing">Manufacturing</option>
+        <option value="Wholesale">Wholesale</option>
+        <option value="Other">Other</option>
+      </select>
+    </label>
+
+    <label>Website Slug
+      <input type="text" name="website_slug" required placeholder="acme-manufacturing">
+    </label>
+
+    <button type="submit">Create Account</button>
+  </form>
+
+  <pre id="register-result"></pre>
+</div>
+
+<style>
+  .portal-shell {
+    max-width: 720px;
+    margin: 2rem auto;
+    padding: 1.5rem;
+    border: 1px solid #d7dee6;
+    border-radius: 12px;
+    background: #ffffff;
+  }
+
+  .portal-form {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .portal-form label {
+    display: grid;
+    gap: 0.4rem;
+    font-weight: 600;
+  }
+
+  .portal-form input,
+  .portal-form select,
+  .portal-form button {
+    padding: 0.6rem;
+    border-radius: 8px;
+    border: 1px solid #c7d2de;
+  }
+
+  .portal-form button {
+    background: #0e7490;
+    color: #fff;
+    cursor: pointer;
+    border: none;
+  }
+</style>
+
+<script>
+  const form = document.getElementById("register-form");
+  const result = document.getElementById("register-result");
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const data = Object.fromEntries(new FormData(form));
+
+    try {
+      const response = await fetch(
+        "/api/method/india_compliance.gst_india.api.portal_management.register_portal_user",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        }
+      );
+
+      const payload = await response.json();
+      result.textContent = JSON.stringify(payload, null, 2);
+    } catch (error) {
+      result.textContent = `Request failed: ${error.message}`;
+    }
+  });
+</script>

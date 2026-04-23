@@ -20,6 +20,9 @@ services:
       DB_PORT: "3306"
       MYSQL_ROOT_PASSWORD: admin
       MARIADB_ROOT_PASSWORD: admin
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODEL: mistral:7b-instruct
+      OLLAMA_TIMEOUT_SECONDS: "300"
 
   configurator:
     <<: *custom_image
@@ -57,6 +60,8 @@ services:
     deploy:
       restart_policy:
         condition: none
+    profiles:
+      - bootstrap
     volumes:
       - sites:/home/frappe/frappe-bench/sites
       - logs:/home/frappe/frappe-bench/logs
@@ -118,7 +123,7 @@ services:
       - nginx-entrypoint.sh
     environment:
       BACKEND: backend:8000
-      FRAPPE_SITE_NAME_HEADER: frontend
+      FRAPPE_SITE_NAME_HEADER: $$host
       SOCKETIO: websocket:9000
       UPSTREAM_REAL_IP_ADDRESS: 127.0.0.1
       UPSTREAM_REAL_IP_HEADER: X-Forwarded-For
@@ -218,11 +223,22 @@ services:
       - sites:/home/frappe/frappe-bench/sites
       - logs:/home/frappe/frappe-bench/logs
 
+  ollama:
+    image: ollama/ollama:latest
+    networks:
+      - frappe_network
+    deploy:
+      restart_policy:
+        condition: on-failure
+    volumes:
+      - ollama-data:/root/.ollama
+
 volumes:
   db-data:
   redis-queue-data:
   sites:
   logs:
+  ollama-data:
 
 networks:
   frappe_network:
