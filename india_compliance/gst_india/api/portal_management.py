@@ -1,7 +1,10 @@
+import base64
+from io import BytesIO
 import json
 import os
 import csv
 import io
+import re
 
 import frappe
 from frappe import _
@@ -84,6 +87,128 @@ def _seed_demo_invoices():
             "status": "mismatch",
         },
     ]
+
+
+def _decode_base64_file(file_data):
+    if not file_data:
+        frappe.throw(_("OCR image data is required"))
+
+    if "," in file_data and file_data.startswith("data:"):
+        file_data = file_data.split(",", 1)[1]
+
+    return base64.b64decode(file_data)
+
+
+def _parse_invoice_text(text):
+    normalized_text = re.sub(r"\s+", " ", text or "").strip()
+
+    def _first_match(pattern):
+        match = re.search(pattern, normalized_text, re.IGNORECASE)
+        return match.group(1).strip() if match else ""
+
+    def _first_amount(patterns):
+        for pattern in patterns:
+            match = re.search(pattern, normalized_text, re.IGNORECASE)
+            if match:
+                return float(match.group(1).replace(",", ""))
+        return 0
+
+    invoice_number = _first_match(r"(?:invoice(?:\s*(?:no|number))?|bill(?:\s*no|\s*number)?|inv(?:oice)?)\s*[:#-]?\s*([A-Z0-9\-/]+)")
+    gstin = _first_match(r"\b([0-9A-Z]{15})\b")
+    date_value = _first_match(
+        r"(?:date|invoice date)\s*[:#-]?\s*([0-9]{1,2}[\-/][0-9]{1,2}[\-/][0-9]{2,4}|[0-9]{1,2}\s+[A-Za-z]{3,9}\s+[0-9]{4})"
+    )
+
+    taxable_value = _first_amount(
+        [
+            r"(?:taxable\s*value|taxable\s*amount|assessable\s*value|tax\s*value)\s*[:#-]?\s*(?:rs\.?|inr|₹)?\s*([0-9,]+(?:\.[0-9]{1,2})?)",
+            r"(?:subtotal|sub\s*total)\s*[:#-]?\s*(?:rs\.?|inr|₹)?\s*([0-9,]+(?:\.[0-9]{1,2})?)",
+        ]
+    )
+    cgst_amount = _first_amount(
+        [r"(?:cgst)\s*[:#-]?\s*(?:rs\.?|inr|₹)?\s*([0-9,]+(?:\.[0-9]{1,2})?)"]
+    )
+    sgst_amount = _first_amount(
+        [r"(?:sgst)\s*[:#-]?\s*(?:rs\.?|inr|₹)?\s*([0-9,]+(?:\.[0-9]{1,2})?)"]
+    )
+    igst_amount = _first_amount(
+        [r"(?:igst)\s*[:#-]?\s*(?:rs\.?|inr|₹)?\s*([0-9,]+(?:\.[0-9]{1,2})?)"]
+    )
+    total_tax = _first_amount(
+        [
+            r"(?:gst\s*amount|tax\s*amount|total\s*gst|gst)\s*[:#-]?\s*(?:rs\.?|inr|₹)?\s*([0-9,]+(?:\.[0-9]{1,2})?)",
+            r"(?:tax)\s*[:#-]?\s*(?:rs\.?|inr|₹)?\s*([0-9,]+(?:\.[0-9]{1,2})?)",
+        ]
+    )
+    total_amount = _first_amount(
+        [
+            r"(?:grand\s*total|invoice\s*total|total\s*amount|net\s*amount|amount\s*due)\s*[:#-]?\s*(?:rs\.?|inr|₹)?\s*([0-9,]+(?:\.[0-9]{1,2})?)",
+        ]
+    )
+
+    if not total_tax and (cgst_amount or sgst_amount or igst_amount):
+        total_tax = round(cgst_amount + sgst_amount + igst_amount, 2)
+
+    if not total_amount and taxable_value and total_tax:
+        total_amount = round(taxable_value + total_tax, 2)
+
+    amount_value = total_amount or taxable_value
+
+    payload = {
+        "invoice_number": invoice_number,
+        "gstin": gstin,
+        "date": date_value,
+        "taxable_value": taxable_value,
+        "cgst": cgst_amount,
+        "sgst": sgst_amount,
+        "igst": igst_amount,
+        "gst": total_tax,
+        "tax_amount": total_tax,
+        "total_amount": total_amount,
+        "amount": amount_value,
+        "status": "pending",
+        "source": "gst_invoice_ai_ocr",
+        "extracted_text": normalized_text,
+    }
+
+    if payload["gstin"]:
+        payload["gstin"] = payload["gstin"].upper()
+
+    return payload
+
+
+@frappe.whitelist(allow_guest=True)
+def gst_ocr_invoice(image_base64=None, filename=None):
+    try:
+        from PIL import Image, ImageEnhance, ImageFilter, ImageOps
+        import pytesseract
+    except ImportError as exc:
+        frappe.throw(
+            _(
+                "OCR dependencies are missing. Please install Pillow, pytesseract, and the Tesseract OCR engine."
+            )
+        )
+
+    raw_bytes = _decode_base64_file(image_base64)
+
+    try:
+        image = Image.open(BytesIO(raw_bytes))
+        image = image.convert("RGB")
+        image = ImageOps.grayscale(image)
+        image = ImageEnhance.Contrast(image).enhance(2.0)
+        image = image.filter(ImageFilter.SHARPEN)
+    except Exception as exc:
+        frappe.throw(_("Unable to read uploaded image for OCR: {0}").format(exc))
+
+    text = pytesseract.image_to_string(image, config="--psm 6")
+    parsed = _parse_invoice_text(text)
+    parsed["filename"] = filename
+
+    return {
+        "success": True,
+        "data": parsed,
+        "message": "OCR completed",
+    }
 
 
 @frappe.whitelist()
@@ -349,30 +474,38 @@ def list_portal_users(industry_type=None):
 def ensure_create_account_nav_item():
     settings = frappe.get_single("Website Settings")
 
-    for item in settings.get("top_bar_items"):
-        if (item.label or "").strip().lower() == "create account":
-            item.url = "/user-register"
+    desired_items = [
+        {"label": "Home", "url": "/user-portal"},
+        {"label": "GST Copilot", "url": "/gst-copilot"},
+        {"label": "Create Account", "url": "/user-register"},
+    ]
+
+    existing = list(settings.get("top_bar_items") or [])
+    labels_to_item = {}
+    for item in existing:
+        labels_to_item[(item.label or "").strip().lower()] = item
+
+    for nav_item in desired_items:
+        item = labels_to_item.get(nav_item["label"].lower())
+        if item:
+            item.url = nav_item["url"]
             item.right = 0
             item.open_in_new_tab = 0
-            settings.save(ignore_permissions=True)
-            return {
-                "message": _("Create Account navigation ensured"),
-                "updated": True,
-            }
+        else:
+            settings.append(
+                "top_bar_items",
+                {
+                    "label": nav_item["label"],
+                    "url": nav_item["url"],
+                    "right": 0,
+                    "open_in_new_tab": 0,
+                },
+            )
 
-    settings.append(
-        "top_bar_items",
-        {
-            "label": "Create Account",
-            "url": "/user-register",
-            "right": 0,
-            "open_in_new_tab": 0,
-        },
-    )
     settings.save(ignore_permissions=True)
 
     return {
-        "message": _("Create Account navigation ensured"),
+        "message": _("Portal navigation ensured"),
         "updated": True,
     }
 

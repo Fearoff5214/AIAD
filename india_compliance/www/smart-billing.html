@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Fearoff AIAD – Smart Billing</title>
+<meta name="description" content="Voice and OCR-based GST billing for ultra-fast invoice creation."/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{--ink:#111827;--muted:#6b7280;--line:#e5e7eb;--soft:#f9fafb;--panel:#fff;--teal:#0f766e;--teal-soft:#f0fdfa;--teal-dark:#065f46;--red:#dc2626;--red-soft:#fef2f2;--amber:#d97706;--amber-soft:#fffbeb;--green:#16a34a;--green-soft:#f0fdf4;--radius:14px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:linear-gradient(160deg,#f0fdfa 0%,#f9fafb 60%,#fff 100%);color:var(--ink);min-height:100vh}
+.page{max-width:1100px;margin:0 auto;padding:1.5rem 1rem}
+h1{font-size:1.8rem;font-weight:700;color:var(--teal-dark);margin-bottom:.25rem}
+.subtitle{color:var(--muted);font-size:.95rem;margin-bottom:1.5rem}
+.tabs{display:flex;gap:.5rem;margin-bottom:1.5rem;flex-wrap:wrap}
+.tab-btn{padding:.6rem 1.4rem;border-radius:8px;border:2px solid var(--line);background:var(--soft);font-weight:600;font-size:.9rem;cursor:pointer;transition:all .2s}
+.tab-btn.active{border-color:var(--teal);background:var(--teal);color:#fff}
+.tab-pane{display:none}.tab-pane.active{display:block}
+/* Cards */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:1.2rem;margin-bottom:1rem}
+.card-head{font-weight:700;font-size:1rem;margin-bottom:.8rem;color:var(--teal-dark)}
+/* Voice section */
+.mic-wrap{display:flex;flex-direction:column;align-items:center;gap:.8rem;padding:1rem 0}
+#mic-btn{width:90px;height:90px;border-radius:50%;border:none;background:linear-gradient(135deg,var(--teal),var(--teal-dark));color:#fff;font-size:2rem;cursor:pointer;box-shadow:0 4px 20px rgba(15,118,110,.35);transition:transform .15s,box-shadow .15s}
+#mic-btn:hover{transform:scale(1.06);box-shadow:0 6px 28px rgba(15,118,110,.45)}
+#mic-btn.recording{background:linear-gradient(135deg,var(--red),#991b1b);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.4)}50%{box-shadow:0 0 0 14px rgba(220,38,38,0)}}
+#transcript-box{width:100%;min-height:60px;border:1px solid var(--line);border-radius:10px;padding:.7rem 1rem;background:var(--soft);font-size:.9rem;color:var(--ink);resize:vertical}
+.mic-status{font-size:.82rem;color:var(--muted);font-weight:600}
+.voice-hint{font-size:.8rem;color:var(--muted);text-align:center;max-width:400px}
+/* Items table */
+.inv-table{width:100%;border-collapse:collapse;font-size:.85rem}
+.inv-table th{background:var(--soft);padding:.55rem .7rem;text-align:left;font-weight:600;border-bottom:2px solid var(--line)}
+.inv-table td{padding:.55rem .7rem;border-bottom:1px solid var(--line);vertical-align:middle}
+.inv-table td input,select{border:1px solid var(--line);border-radius:6px;padding:.35rem .5rem;font-size:.82rem;width:100%}
+.del-btn{background:var(--red-soft);color:var(--red);border:1px solid #fecaca;border-radius:6px;padding:.3rem .6rem;cursor:pointer;font-size:.78rem;font-weight:700}
+/* Totals bar */
+.totals-row{display:flex;gap:1rem;flex-wrap:wrap;justify-content:flex-end;margin-top:.5rem}
+.tot-chip{background:var(--teal-soft);border:1px solid #a7f3d0;border-radius:8px;padding:.4rem .9rem;font-size:.82rem;font-weight:700;color:var(--teal-dark)}
+.tot-chip.grand{background:var(--teal);color:#fff;font-size:.95rem}
+/* Confidence badge */
+.conf-badge{display:inline-block;border-radius:6px;padding:.2rem .6rem;font-size:.75rem;font-weight:700;margin-left:.5rem}
+.conf-high{background:var(--green-soft);color:var(--green);border:1px solid #bbf7d0}
+.conf-medium{background:var(--amber-soft);color:var(--amber);border:1px solid #fde68a}
+.conf-low{background:var(--red-soft);color:var(--red);border:1px solid #fecaca}
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:.4rem;border:none;border-radius:9px;padding:.65rem 1.3rem;font-weight:700;font-size:.88rem;cursor:pointer;transition:all .2s}
+.btn-teal{background:linear-gradient(135deg,var(--teal),var(--teal-dark));color:#fff}
+.btn-teal:hover{opacity:.9;transform:translateY(-1px)}
+.btn-red{background:var(--red-soft);color:var(--red);border:1px solid #fecaca}
+.btn-ghost{background:var(--soft);color:var(--ink);border:1px solid var(--line)}
+.btn-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.9rem}
+/* OCR */
+.upload-zone{border:2px dashed var(--line);border-radius:12px;padding:2.5rem 1rem;text-align:center;background:var(--soft);cursor:pointer;transition:border-color .2s}
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--teal);background:var(--teal-soft)}
+.upload-icon{font-size:2.5rem;margin-bottom:.6rem}
+.upload-hint{font-size:.82rem;color:var(--muted)}
+#preview-img{max-width:100%;max-height:260px;border-radius:10px;border:1px solid var(--line);object-fit:contain;margin-top:.8rem;display:none}
+/* Issues */
+.issue-box{background:var(--amber-soft);border:1px solid #fde68a;border-radius:8px;padding:.7rem 1rem;margin:.5rem 0;font-size:.82rem;color:#92400e}
+.issue-item{margin:.2rem 0 .2rem 1rem;list-style:disc}
+/* Success toast */
+#toast{position:fixed;bottom:1.5rem;right:1.5rem;background:#065f46;color:#fff;border-radius:10px;padding:.8rem 1.3rem;font-weight:600;font-size:.9rem;display:none;z-index:999;box-shadow:0 4px 20px rgba(0,0,0,.2)}
+/* Responsive */
+@media(max-width:640px){
+  h1{font-size:1.35rem}
+  #mic-btn{width:76px;height:76px;font-size:1.6rem}
+  .inv-table{font-size:.78rem}
+}
+</style>
+</head>
+<body>
+<nav style="background:linear-gradient(135deg,#065f46,#0f766e);padding:.6rem 1.4rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.2)">
+  <a href="/user-portal" style="color:#fff;font-weight:700;font-size:1rem;text-decoration:none;display:flex;align-items:center;gap:.5rem">
+    <span style="width:10px;height:10px;background:#5eead4;border-radius:50%;display:inline-block"></span>Fearoff AIAD
+  </a>
+  <div style="display:flex;gap:.3rem;flex-wrap:wrap">
+    <a href="/user-portal" style="color:#a7f3d0;font-weight:600;font-size:.83rem;text-decoration:none;padding:.35rem .75rem;border-radius:7px;transition:background .2s" onmouseover="this.style.background='rgba(255,255,255,.15)'" onmouseout="this.style.background='transparent'">📊 Dashboard</a>
+    <a href="/gst-copilot" style="color:#a7f3d0;font-weight:600;font-size:.83rem;text-decoration:none;padding:.35rem .75rem;border-radius:7px;transition:background .2s" onmouseover="this.style.background='rgba(255,255,255,.15)'" onmouseout="this.style.background='transparent'">🤖 GST Copilot</a>
+    <a href="/smart-billing" style="color:#fff;font-weight:700;font-size:.83rem;text-decoration:none;padding:.35rem .75rem;border-radius:7px;background:rgba(255,255,255,.2)">⚡ Smart Billing</a>
+    <a href="/gst-demo" style="color:#a7f3d0;font-weight:600;font-size:.83rem;text-decoration:none;padding:.35rem .75rem;border-radius:7px;transition:background .2s" onmouseover="this.style.background='rgba(255,255,255,.15)'" onmouseout="this.style.background='transparent'">📄 GST Demo</a>
+    <a href="/user-register" style="color:#a7f3d0;font-weight:600;font-size:.83rem;text-decoration:none;padding:.35rem .75rem;border-radius:7px;transition:background .2s" onmouseover="this.style.background='rgba(255,255,255,.15)'" onmouseout="this.style.background='transparent'">➕ Register</a>
+    <a href="/app" style="color:#a7f3d0;font-weight:600;font-size:.83rem;text-decoration:none;padding:.35rem .75rem;border-radius:7px;transition:background .2s" onmouseover="this.style.background='rgba(255,255,255,.15)'" onmouseout="this.style.background='transparent'">📋 ERP Desk</a>
+  </div>
+</nav>
+<div class="page">
+  <h1>⚡ Smart Billing</h1>
+  <p class="subtitle">Voice or Scan → GST Invoice in seconds &nbsp;|&nbsp; <a href="/user-portal" style="color:var(--teal);font-weight:600;text-decoration:none">← Back to Dashboard</a></p>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('voice',this)">🎤 Voice Billing</button>
+    <button class="tab-btn" onclick="switchTab('ocr',this)">📷 Scan Bill</button>
+  </div>
+
+  <!-- ═══════════════ VOICE TAB ═══════════════ -->
+  <div class="tab-pane active" id="tab-voice">
+    <div class="card">
+      <div class="card-head">Speak your items</div>
+      <div class="mic-wrap">
+        <button id="mic-btn" title="Tap to speak">🎤</button>
+        <span class="mic-status" id="mic-status">Tap mic to start</span>
+        <div class="voice-hint">Say: "2 kg rice 100 rupees and 1 oil 150" • "Remove last item" • "Generate bill"</div>
+      </div>
+      <textarea id="transcript-box" placeholder="Or type here: '3 soap 45 and 2 kg atta 60'"></textarea>
+      <div class="btn-row">
+        <button class="btn btn-teal" onclick="parseVoice()">⚙️ Parse Items</button>
+        <button class="btn btn-ghost" onclick="clearVoice()">✕ Clear</button>
+      </div>
+    </div>
+
+    <div class="card" id="voice-result-card" style="display:none">
+      <div class="card-head" id="voice-result-head">Parsed Items</div>
+      <table class="inv-table" id="voice-table">
+        <thead><tr><th>#</th><th>Item</th><th>Qty</th><th>Unit</th><th>Price ₹</th><th>HSN</th><th>GST%</th><th>Total ₹</th><th></th></tr></thead>
+        <tbody id="voice-tbody"></tbody>
+      </table>
+      <div class="totals-row" id="voice-totals"></div>
+      <div id="voice-issues"></div>
+      <div class="btn-row">
+        <button class="btn btn-teal" onclick="confirmVoiceInvoice()">✅ Confirm & Save</button>
+        <button class="btn btn-ghost" onclick="addVoiceRow()">+ Add Row</button>
+        <button class="btn btn-red" onclick="clearVoice()">🗑 Discard</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ OCR TAB ═══════════════ -->
+  <div class="tab-pane" id="tab-ocr">
+    <div class="card">
+      <div class="card-head">Upload or Capture Bill</div>
+      <div class="upload-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+        <div class="upload-icon">📷</div>
+        <p><strong>Click to upload</strong> or drag & drop</p>
+        <p class="upload-hint">JPEG, PNG, WEBP – up to 10MB</p>
+        <input type="file" id="file-input" accept="image/*" capture="environment" style="display:none"/>
+      </div>
+      <img id="preview-img" alt="Bill preview"/>
+      <div class="btn-row" id="ocr-action-row" style="display:none">
+        <button class="btn btn-teal" id="ocr-scan-btn" onclick="runOCR()">🔍 Scan & Extract</button>
+        <button class="btn btn-ghost" onclick="clearOCR()">✕ Clear</button>
+      </div>
+      <div id="ocr-progress" style="display:none;margin-top:.7rem;font-size:.85rem;color:var(--teal);font-weight:600">⏳ Processing image…</div>
+    </div>
+
+    <div class="card" id="ocr-result-card" style="display:none">
+      <div class="card-head">Extracted Data <span id="ocr-bill-type" class="conf-badge conf-high"></span></div>
+      <table class="inv-table" id="ocr-table">
+        <thead><tr><th>#</th><th>Item</th><th>Qty</th><th>Unit</th><th>Price ₹</th><th>HSN</th><th>GST%</th><th>Total ₹</th><th></th></tr></thead>
+        <tbody id="ocr-tbody"></tbody>
+      </table>
+      <div class="totals-row" id="ocr-totals"></div>
+      <div id="ocr-issues"></div>
+      <div class="btn-row">
+        <button class="btn btn-teal" onclick="confirmOCRInvoice()">✅ Confirm & Save</button>
+        <button class="btn btn-ghost" onclick="addOCRRow()">+ Add Row</button>
+        <button class="btn btn-red" onclick="clearOCR()">🗑 Discard</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast">✅ Invoice saved!</div>
+
+<script>
+// ──────── Shared Utilities ────────
+const API = (method) => `/api/method/india_compliance.gst_india.api.${method}`;
+
+async function callAPI(method, body) {
+  const r = await fetch(API(method), {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json', 'X-Frappe-CSRF-Token': frappe?.csrf_token || ''},
+    body: JSON.stringify(body)
+  });
+  return r.json();
+}
+
+function toast(msg, ok=true) {
+  const t = document.getElementById('toast');
+  t.textContent = (ok ? '✅ ' : '❌ ') + msg;
+  t.style.background = ok ? '#065f46' : '#991b1b';
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 3000);
+}
+
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+
+function buildItemRow(item, idx, tbodyId) {
+  const tr = document.createElement('tr');
+  tr.dataset.idx = idx;
+  const fields = ['name','quantity','unit','price','hsn_code','gst_rate'];
+  tr.innerHTML = `
+    <td>${idx+1}</td>
+    ${fields.map(f => `<td><input class="item-${f}" value="${item[f]||''}" 
+      oninput="recalcRow(this)" data-field="${f}"/></td>`).join('')}
+    <td class="item-total">${(item.total||0).toFixed(2)}</td>
+    <td><button class="del-btn" onclick="deleteRow(this,'${tbodyId}')">✕</button></td>`;
+  return tr;
+}
+
+function recalcRow(input) {
+  const tr = input.closest('tr');
+  const qty = parseFloat(tr.querySelector('.item-quantity')?.value) || 0;
+  const price = parseFloat(tr.querySelector('.item-price')?.value) || 0;
+  const gst = parseFloat(tr.querySelector('.item-gst_rate')?.value) || 0;
+  const taxable = qty * price;
+  const total = taxable * (1 + gst/100);
+  tr.querySelector('.item-total').textContent = total.toFixed(2);
+  recalcTotals(tr.closest('table'));
+}
+
+function recalcTotals(table) {
+  let sub=0, gstAmt=0;
+  table.querySelectorAll('tbody tr').forEach(tr => {
+    const qty = parseFloat(tr.querySelector('.item-quantity')?.value)||0;
+    const price = parseFloat(tr.querySelector('.item-price')?.value)||0;
+    const gst = parseFloat(tr.querySelector('.item-gst_rate')?.value)||0;
+    const tax = qty*price;
+    sub += tax;
+    gstAmt += tax*gst/100;
+  });
+  const totId = table.id === 'voice-table' ? 'voice-totals' : 'ocr-totals';
+  renderTotals(totId, sub, gstAmt);
+}
+
+function renderTotals(containerId, sub, gstAmt) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = `
+    <span class="tot-chip">Subtotal: ₹${sub.toFixed(2)}</span>
+    <span class="tot-chip">GST: ₹${gstAmt.toFixed(2)}</span>
+    <span class="tot-chip grand">Total: ₹${(sub+gstAmt).toFixed(2)}</span>`;
+}
+
+function deleteRow(btn, tbodyId) {
+  btn.closest('tr').remove();
+  const tbody = document.getElementById(tbodyId);
+  recalcTotals(tbody.closest('table'));
+}
+
+function getRowsAsItems(tbodyId) {
+  const rows = document.querySelectorAll(`#${tbodyId} tr`);
+  return Array.from(rows).map(tr => ({
+    name: tr.querySelector('.item-name')?.value || '',
+    quantity: parseFloat(tr.querySelector('.item-quantity')?.value)||1,
+    unit: tr.querySelector('.item-unit')?.value || 'pcs',
+    price: parseFloat(tr.querySelector('.item-price')?.value)||0,
+    hsn_code: tr.querySelector('.item-hsn_code')?.value || '',
+    gst_rate: parseFloat(tr.querySelector('.item-gst_rate')?.value)||0,
+  })).filter(i => i.name);
+}
+
+function addBlankRow(tbodyId) {
+  const tbody = document.getElementById(tbodyId);
+  const idx = tbody.querySelectorAll('tr').length;
+  const item = {name:'',quantity:1,unit:'pcs',price:0,hsn_code:'',gst_rate:18,total:0};
+  tbody.appendChild(buildItemRow(item, idx, tbodyId));
+}
+
+function showIssues(containerId, issues) {
+  const el = document.getElementById(containerId);
+  if (!issues || !issues.length) { el.innerHTML=''; return; }
+  el.innerHTML = `<div class="issue-box">⚠ <strong>Please review:</strong><ul>
+    ${issues.map(i=>`<li class="issue-item">${i}</li>`).join('')}</ul></div>`;
+}
+
+// ──────── VOICE BILLING ────────
+let _recognition = null;
+
+function startMic() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { toast('Mic not supported in this browser. Type below instead.',false); return; }
+  if (_recognition) { _recognition.stop(); return; }
+  _recognition = new SR();
+  _recognition.continuous = false;
+  _recognition.interimResults = true;
+  _recognition.lang = 'en-IN';
+  const btn = document.getElementById('mic-btn');
+  const status = document.getElementById('mic-status');
+  btn.classList.add('recording');
+  btn.textContent = '⏹';
+  status.textContent = 'Listening… speak now';
+  _recognition.onresult = (e) => {
+    const t = Array.from(e.results).map(r=>r[0].transcript).join(' ');
+    document.getElementById('transcript-box').value = t;
+  };
+  _recognition.onend = () => {
+    btn.classList.remove('recording');
+    btn.textContent = '🎤';
+    status.textContent = 'Tap mic to start';
+    _recognition = null;
+    parseVoice();
+  };
+  _recognition.onerror = (e) => {
+    toast('Mic error: '+e.error, false);
+    btn.classList.remove('recording');
+    btn.textContent = '🎤';
+    _recognition = null;
+  };
+  _recognition.start();
+}
+
+document.getElementById('mic-btn').addEventListener('click', startMic);
+
+async function parseVoice() {
+  const text = document.getElementById('transcript-box').value.trim();
+  if (!text) { toast('Please speak or type something', false); return; }
+  const resp = await callAPI('voice_billing.process_voice', {text});
+  if (!resp.message) { toast('Server error', false); return; }
+  const data = resp.message;
+  if (!data.success) { toast(data.error||'Parse failed', false); return; }
+  if (data.type === 'command') { handleVoiceCommand(data.command); return; }
+
+  const items = data.items || [];
+  const conf = data.confidence || 'low';
+  const headEl = document.getElementById('voice-result-head');
+  headEl.innerHTML = `Parsed Items <span class="conf-badge conf-${conf}">${conf.toUpperCase()} confidence</span>`;
+
+  const tbody = document.getElementById('voice-tbody');
+  tbody.innerHTML = '';
+  items.forEach((item, i) => tbody.appendChild(buildItemRow(item, i, 'voice-tbody')));
+
+  const inv = data.invoice || {};
+  renderTotals('voice-totals', inv.subtotal||0, inv.total_gst||0);
+  showIssues('voice-issues', data.validation?.errors||[]);
+  document.getElementById('voice-result-card').style.display = 'block';
+}
+
+function handleVoiceCommand(cmd) {
+  if (cmd === 'remove_last') {
+    const rows = document.querySelectorAll('#voice-tbody tr');
+    if (rows.length) rows[rows.length-1].remove();
+    toast('Last item removed');
+  } else if (cmd === 'clear_all') {
+    clearVoice();
+  } else if (cmd === 'generate_bill') {
+    confirmVoiceInvoice();
+  } else if (cmd === 'show_total') {
+    recalcTotals(document.getElementById('voice-table'));
+    toast('Totals updated');
+  }
+}
+
+async function confirmVoiceInvoice() {
+  const items = getRowsAsItems('voice-tbody');
+  if (!items.length) { toast('No items to save', false); return; }
+  const invoice = { items, source:'voice_billing', date: new Date().toISOString().split('T')[0] };
+  const resp = await callAPI('voice_billing.confirm_voice_invoice', { invoice_json: JSON.stringify(invoice) });
+  if (resp.message?.success) { toast('Invoice saved!'); clearVoice(); }
+  else toast(resp.message?.error||'Save failed', false);
+}
+
+function addVoiceRow() { addBlankRow('voice-tbody'); }
+function clearVoice() {
+  document.getElementById('transcript-box').value = '';
+  document.getElementById('voice-tbody').innerHTML = '';
+  document.getElementById('voice-result-card').style.display = 'none';
+  document.getElementById('voice-totals').innerHTML = '';
+  document.getElementById('voice-issues').innerHTML = '';
+}
+
+// ──────── OCR BILLING ────────
+let _ocrBase64 = null;
+let _ocrFilename = null;
+
+const fileInput = document.getElementById('file-input');
+const dropZone = document.getElementById('drop-zone');
+const previewImg = document.getElementById('preview-img');
+
+fileInput.addEventListener('change', e => loadImageFile(e.target.files[0]));
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('drag-over');
+  loadImageFile(e.dataTransfer.files[0]);
+});
+
+function loadImageFile(file) {
+  if (!file) return;
+  _ocrFilename = file.name;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    _ocrBase64 = e.target.result;
+    previewImg.src = _ocrBase64;
+    previewImg.style.display = 'block';
+    document.getElementById('ocr-action-row').style.display = 'flex';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function runOCR() {
+  if (!_ocrBase64) { toast('Please upload an image first', false); return; }
+  document.getElementById('ocr-progress').style.display = 'block';
+  document.getElementById('ocr-scan-btn').disabled = true;
+  const resp = await callAPI('ocr_billing.process_ocr', { image_base64: _ocrBase64, filename: _ocrFilename });
+  document.getElementById('ocr-progress').style.display = 'none';
+  document.getElementById('ocr-scan-btn').disabled = false;
+
+  const data = resp.message;
+  if (!data?.success) { toast(data?.error||'OCR failed', false); return; }
+
+  const result = data.data;
+  const items = result.items || [];
+  const totals = result.totals || {};
+
+  document.getElementById('ocr-bill-type').textContent = result.bill_type || 'Purchase';
+
+  const tbody = document.getElementById('ocr-tbody');
+  tbody.innerHTML = '';
+  items.forEach((item, i) => tbody.appendChild(buildItemRow(item, i, 'ocr-tbody')));
+  renderTotals('ocr-totals', totals.computed_subtotal||0, totals.computed_gst||0);
+  showIssues('ocr-issues', result.validation?.issues||[]);
+  document.getElementById('ocr-result-card').style.display = 'block';
+}
+
+async function confirmOCRInvoice() {
+  const items = getRowsAsItems('ocr-tbody');
+  if (!items.length) { toast('No items to save', false); return; }
+  const invoice = { items, source:'ocr_billing', date: new Date().toISOString().split('T')[0] };
+  const resp = await callAPI('ocr_billing.confirm_ocr_invoice', { invoice_json: JSON.stringify(invoice) });
+  if (resp.message?.success) { toast('Invoice confirmed!'); clearOCR(); }
+  else toast(resp.message?.error||'Save failed', false);
+}
+
+function addOCRRow() { addBlankRow('ocr-tbody'); }
+function clearOCR() {
+  _ocrBase64 = null; _ocrFilename = null;
+  fileInput.value = '';
+  previewImg.style.display = 'none';
+  document.getElementById('ocr-action-row').style.display = 'none';
+  document.getElementById('ocr-tbody').innerHTML = '';
+  document.getElementById('ocr-result-card').style.display = 'none';
+  document.getElementById('ocr-totals').innerHTML = '';
+  document.getElementById('ocr-issues').innerHTML = '';
+}
+</script>
+</body>
+</html>

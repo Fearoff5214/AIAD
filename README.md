@@ -1,160 +1,234 @@
-<div align="center">
+# Fearoff AIAD – GST Compliance & Smart Billing Portal
 
-<!-- TODO: add link to website once it is ready -->
-<h1>GST INDIA</h1>
+A production-ready ERPNext (Frappe v15) application with AI-powered GST compliance tools, voice billing, OCR bill scanning, and a unified dark-teal portal suite.
 
-</div>
+---
 
+## 🚀 Quick Start
 
+### Prerequisites
+- **Docker Desktop** (running)
+- **Ollama** installed on the host with `deepseek-r1:7b` pulled
 
-## Introduction
+```bash
+ollama pull deepseek-r1:7b
+```
 
-This project aims to integrate the ClearTax portal's APIs with the ERPNext solution. The user can directly generate e-invoices, IRNs, and E-way bills and cancel them from within ERPNext.
+### Start the Application
 
-It works on top of [ERPNext](https://github.com/frappe/erpnext) and the [Frappe Framework](https://github.com/frappe/frappe) - incredible FOSS projects built and maintained by the incredible folks at Frappe. Go check these out if you haven't already!
+```bash
+# Windows – double-click or run:
+run_fearoff_aiad.bat
+```
 
-## Key Features
+Or manually:
 
-- E-invoicing (Generation/Cancellation)
-- E-Way Bills (Generation/Cancellation/Updation)
-- GST Invoices (Generation)
-- Credit/Debit Notes
-- Export Invoices
+```bash
+cd Fearoff_AIAD
+docker compose up -d
+```
 
+Wait ~60 seconds for Frappe to initialise, then open:
 
-## Prerequisites
+**http://localhost:8085**
 
-- Cleartax Account ( Only for Enterprise Users)
-- Erpnext(v13 & above)
-- Frappe (v13 & above)
+---
 
-## Installation
+## 🌐 Portal Pages
 
-Once you've [set up a Frappe site](https://frappeframework.com/docs/v14/user/en/installation/), installing India Compliance is simple:
+| URL | Page | Description |
+|-----|------|-------------|
+| `/user-portal` | **User Dashboard** | Sector-tailored dashboard with GST tools and feature tiles |
+| `/smart-billing` | **⚡ Smart Billing** | Voice billing + OCR bill scanning (NEW) |
+| `/gst-copilot` | **🤖 GST Copilot** | AI chat assistant for India GST compliance |
+| `/gst-demo` | **📄 GST Demo** | Interactive correct vs. incorrect invoice comparison |
+| `/user-register` | **➕ Register** | Self-service business account registration |
+| `/admin-user-management` | **⚙️ Admin Panel** | Tenant management, user admin, usage analytics |
+| `/app` | **📋 ERP Desk** | Full Frappe/ERPNext desk interface |
 
+All pages share a unified **dark-teal navigation bar** with links to every section.
 
-1. Download the app using the Bench CLI
+---
 
-  ```bash
-  bench get-app https://github.com/8848digital/GST-India.git
-  ```
+## ⚡ Smart Billing (Voice + OCR)
 
-2. Install the app on your site
+### 🎤 Voice Billing
+1. Navigate to `/smart-billing`
+2. Tap the **🎤 mic button** (or type in the transcript box)
+3. Speak naturally — supports **Hinglish** (Hindi + English mixed):
+   - *"2 kg rice 100 and 1 oil 150"*
+   - *"Add 5 nos soap 45 rupees"*
+   - *"Remove last item"*
+   - *"Generate bill"*
+4. Review the parsed items table (editable)
+5. Click **✅ Confirm & Save**
 
-  ```bash
-  bench --site [site name] install-app india_compliance
-  ```
+**Voice Commands Supported:**
+| Command | Action |
+|---------|--------|
+| "Remove last item / hatao" | Removes the last line |
+| "Clear all / saaf" | Clears all items |
+| "Generate bill / bana" | Confirms invoice |
+| "Show total / kitna" | Refreshes totals |
 
-## Setup Instructions
+### 📷 OCR Bill Scanning
+1. Click the **Scan Bill** tab
+2. Upload a photo or drag & drop a bill image (JPEG/PNG/WEBP)
+3. Click **🔍 Scan & Extract**
+4. Review the extracted items and totals (editable)
+5. Click **✅ Confirm & Save**
 
-1. Enterprise Users
-    1. Go to Cleartax Settings
-    
-      ![3edc54eb-ebc2-4376-9f40-789be607ada2](https://user-images.githubusercontent.com/48561545/206153841-efcdbda0-33f1-4607-9e6c-bf4fcb44b35d.png)
-      
-    2. Check the Enterprise checkbox
-    
-      ![a3c5a656-4c6e-4351-a408-5a952066a621](https://user-images.githubusercontent.com/48561545/206154012-583a8108-a845-46ff-8c24-cd9cd9aa3ce9.png)
-      
-    3. Under Enterprise Details, enter the auth tokens, GSTINs and their corresponding tax entity IDs
-    
-      ![bf71efbc-f6cc-4986-88e7-fbb30db4936d](https://user-images.githubusercontent.com/48561545/206154488-77bdcd35-e214-4987-9aab-630fb4a7e4b0.png)
-      
-2. SMB Users
+**Pipeline:** `Image → Preprocess → Tesseract OCR → AI Parse → Validate → User Confirm → Save`
 
-     1. Go to Cleartax Settings
-    
-      ![3edc54eb-ebc2-4376-9f40-789be607ada2](https://user-images.githubusercontent.com/48561545/206153841-efcdbda0-33f1-4607-9e6c-bf4fcb44b35d.png)
-      
-    2. Uncheck the Enterprise checkbox
-    
-      ![a3c5a656-4c6e-4351-a408-5a952066a621](https://user-images.githubusercontent.com/48561545/206154012-583a8108-a845-46ff-8c24-cd9cd9aa3ce9.png)
-    
-3. Common Setup Instructions
-      
-    1. Click the Enable checkbox to enable all features.
-    
-      ![a528497c-8f2a-4b30-befa-922d0d511104](https://user-images.githubusercontent.com/48561545/206154731-e82b4746-744b-4d0f-ad6d-88f30aa5c126.png)
-      
-    2. Check the Sandbox checkbox for testing and uncheck it for production mode.
-    
-      ![e4db45ad-73c2-4bf2-a610-9ff35c104328](https://user-images.githubusercontent.com/48561545/206154931-dc22a05e-3958-497c-9e20-793f926b5641.png)
-      
-    3. Check the Automate checkbox if you want automatic generation of IRNs and EWBs on submit of documents.
-    
-      ![890bac94-cae5-47b6-bf5f-b11d6d602d1d](https://user-images.githubusercontent.com/48561545/206155163-323c2387-cd2b-4f6a-aedf-92318ee81886.png)
-      
-    4. Select the companies that require E- Invoicing here
-    
-       ![download](https://user-images.githubusercontent.com/48561545/206155995-9673c24a-9c64-4612-887c-4bdcacfc4b49.png)
-       
-    5. Let the Host Site have the default value unless asked to change by the organization.
+> ⚠️ OCR output is **never auto-saved** — you must review and confirm.
 
-  ## Setup And Startup Guide
+---
 
-  For the current multi-tenant deployment flow, account creation, and server startup steps, see [SETUP_AND_STARTUP.md](SETUP_AND_STARTUP.md).
+## 🤖 GST Copilot
 
-        
-## Functionalities
+AI assistant powered by **Ollama (DeepSeek-R1:7b)** running locally on your machine.
 
-### E-Invoicing
+- Ask compliance questions in plain English
+- Answers grounded in the GST knowledge base
+- Supports voice input (mic button)
 
-   1. You can generate IRNs for a Sales Invoice(submitted) by clicking Create -> IRN
-   
-      ![519b521a-a2e0-4430-97a0-54a63c2c7a97](https://user-images.githubusercontent.com/48561545/206352385-fb397afb-508f-4899-815c-12e18ebeb64f.png)
+---
 
-   2. You can see the IRN details in the E-Invoicing section in the More Info tab.
-   
-      ![263d0b80-caaf-487f-b96e-8287b55b49ed](https://user-images.githubusercontent.com/48561545/206352467-ff6be3b3-5ab6-4814-8ed0-b0da9d04544b.png)
+## 📄 GST Compliance Demo
 
-      
-   3. If there are issues with the document, a popup will display the errors.
-   4. You can also check the errors from Cleartax Api Log List
-   5. After generating IRN, now you can generate EWB by IRN.
-   6. In order to generate EWB, 
-      1. The Sales Invoice must be generated from a Delivery Note
-      2.  (OR) A Delivery Note must be generated from the Sales Invoice
-      3.  (OR) Transporter Details must be created from the Sales Invoice.
-   7. To generate EWB, click Create -> EWB 
-   8. EWB details will be in the Ewaybill section in the More Info tab
-   9. You can cancel EWB and IRN from Cancel EWb and Cancel IRN Buttons at the top.
-   10. You can also generate EWb from a Delivery Note. i.e. EWB Without IRN
-   11. In Delivery Note, you can enter the vehicle details, and update with the cleartax Portal. 
-   12. This can be done using the Update Part B Button.
-   13. You can also generate IRN for a Credit Note(same as Sales Invoice)
+Interactive educational tool embedded in the User Dashboard:
 
-### GST Invoice
-  1. You Can Generate GST Invoice for the Following Documents
-      1. Sales Invoice
-      2. Purchase Invoice
-      3. Credit Note
-      4. Debit Note
-  2. To Generate GST Invoice, the billing company must be removed from E-Invoicing list in cleartax Settings
-  3. Click on Create -> GST Invoice
-   
-### Error Log
-   1. Incase anything goes wrong when generating an IRN/EWB/GST Invoice, you can look into the error logs and resolve the data.
-   2. To Check Error logs, go to Cleartax Api Log List.
-   3. You can filter the log by Document ID and API TYPE(i.e. IRN,EWB etc)
-   
-### Bulk Generation
-   1. You can generate IRN and EWB in bulk from Sales Invoice List and Delivery Note List.
-   2. Select the documents, then click on Action -> IRN/EWB.
+- **✅ Correct Invoice** — Example of a fully compliant GST invoice
+- **❌ Invoice with Errors** — Common mistakes highlighted (wrong rate, exempt goods, value mismatch)
+- **🧮 Live Validator** — Enter your own line items to check tax accuracy in real-time
 
-### Dashboards
-   We have created 3 dashboards
-   1. E-Invoicing
-   2. EWB (IRN - Sales Invoice)
-   3. EWB (Delivery Note)
-   
-   You can get the count of generated, pending, failed, cancelled and also a monthly chart in these dashboards.
-  
-    
+---
 
-  
+## 🔐 Demo Accounts
 
+| Email | Password | Role |
+|-------|----------|------|
+| `parameshlogaa@gmail.com` | `PE42026` | Primary Admin |
+| `test_manufacturer@example.com` | `Test@12345` | Manufacturing User |
+| `test_wholesaler@example.com` | `Test@12345` | Wholesale User |
 
+---
 
+## 🏗️ Architecture
 
+```
+docker-compose.yml
+├── backend        ← Gunicorn + Frappe/ERPNext (port 8000 internal)
+├── frontend       ← NGINX reverse proxy (port 8085 external)
+├── db             ← MariaDB 10.6
+├── redis-cache    ← Redis cache
+├── redis-queue    ← Redis job queue
+├── scheduler      ← Frappe scheduler
+├── queue-long     ← Background workers
+├── queue-short    ← Background workers
+└── websocket      ← Socket.IO server
+```
 
+**LLM:** Local Ollama on host → accessed via `host.docker.internal:11434`
 
+**Custom App:** `india_compliance/` (mounted live into all containers)
+
+---
+
+## 📁 Key Files
+
+| File | Purpose |
+|------|---------|
+| `india_compliance/www/user-portal.html` | Main user dashboard |
+| `india_compliance/www/smart-billing.html` | Voice + OCR billing UI |
+| `india_compliance/www/gst-copilot.html` | AI copilot chat UI |
+| `india_compliance/www/gst-demo.html` | GST compliance demo |
+| `india_compliance/www/admin-user-management.html` | Admin panel UI |
+| `india_compliance/gst_india/api/voice_billing.py` | Voice NLP parser + API |
+| `india_compliance/gst_india/api/ocr_billing.py` | OCR pipeline + API |
+| `india_compliance/gst_india/api/gst_copilot.py` | AI copilot backend |
+| `india_compliance/gst_india/api/portal_management.py` | Tenant & admin APIs |
+| `start_frappe_server.py` | Site init orchestrator |
+| `run_fearoff_aiad.bat` | One-click startup script |
+| `Dockerfile` | Custom image (includes Tesseract OCR) |
+| `docker-compose.yml` | Full stack orchestration |
+
+---
+
+## 🔌 API Endpoints
+
+### Voice Billing
+```
+POST /api/method/india_compliance.gst_india.api.voice_billing.process_voice
+     Body: { "text": "2 kg rice 100 and 1 oil 150" }
+
+POST /api/method/india_compliance.gst_india.api.voice_billing.confirm_voice_invoice
+     Body: { "invoice_json": "..." }
+
+GET  /api/method/india_compliance.gst_india.api.voice_billing.get_item_suggestions
+     Query: ?query=rice
+```
+
+### OCR Billing
+```
+POST /api/method/india_compliance.gst_india.api.ocr_billing.process_ocr
+     Body: { "image_base64": "data:image/jpeg;base64,...", "filename": "bill.jpg" }
+
+POST /api/method/india_compliance.gst_india.api.ocr_billing.confirm_ocr_invoice
+     Body: { "invoice_json": "..." }
+```
+
+### GST Copilot
+```
+POST /api/method/india_compliance.gst_india.api.gst_copilot.gst_copilot_chat
+     Body: { "question": "What is the GST rate for rice?" }
+
+GET  /api/method/india_compliance.gst_india.api.gst_copilot.gst_copilot_suggested_questions
+```
+
+---
+
+## 🛠️ Troubleshooting
+
+### 502 Bad Gateway
+The nginx frontend must accept `localhost` as a server name. This is auto-patched in the Dockerfile. If it recurs:
+```bash
+docker exec -u root fearoff_aiad-frontend-1 \
+  sed -i 's/server_name frontend;/server_name frontend localhost;/' \
+  /etc/nginx/conf.d/frappe.conf
+docker exec fearoff_aiad-frontend-1 nginx -s reload
+```
+
+### OCR Not Working
+Ensure Tesseract is installed (it's in the Dockerfile):
+```bash
+docker exec fearoff_aiad-backend-1 tesseract --version
+docker exec fearoff_aiad-backend-1 pip show pytesseract
+```
+
+### AI Copilot Not Responding
+Ensure Ollama is running on your host:
+```bash
+ollama list           # should show deepseek-r1:7b
+ollama run deepseek-r1:7b "hello"
+```
+
+### Full Reset (if state drifts)
+```bash
+docker compose down
+docker volume rm fearoff_aiad_sites fearoff_aiad_db-data
+docker compose up -d
+```
+
+---
+
+## 📝 GST Compliance Notes
+
+- Voice billing auto-suggests **HSN codes** and **GST rates** for 60+ common items
+- OCR parsing extracts GSTIN, invoice number, date, line items, CGST/SGST/IGST
+- All extracted data goes through validation before saving
+- The GST Demo educates users on common errors: wrong rates, taxing exempt goods, value mismatches
+
+---
+
+*Fearoff AIAD — Built with Frappe v15, ERPNext, Ollama DeepSeek-R1, Tesseract OCR*

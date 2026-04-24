@@ -10,6 +10,8 @@ dependencies = [
     "python-barcode~=0.13.1",
     "titlecase~=2.3",
     "rapidfuzz~=2.15.0",
+    "pillow~=10.4.0",
+    "pytesseract~=0.3.13",
 
     # Not used directly - required by PyQRCode for PNG generation
     "pypng~=0.20220715.0",

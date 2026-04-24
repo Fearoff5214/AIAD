@@ -128,6 +128,7 @@
     .workspace-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; margin-bottom: 0.9rem; }
     .workspace-card { border: 1px solid #d8dfeb; border-radius: 12px; background: #ffffff; padding: 0.9rem; }
     .workspace-card h3 { margin-bottom: 0.45rem; }
+    .workspace-card p { color: #445065; font-size: 0.9rem; line-height: 1.45; }
     #invoice-json-input {
       width: 100%;
       border: 1px solid #d3dceb;
@@ -137,6 +138,18 @@
       font-size: 0.86rem;
       margin: 0.35rem 0 0.6rem;
     }
+    #invoice-image-input,
+    #billing-voice-input {
+      width: 100%;
+      border: 1px solid #d3dceb;
+      border-radius: 8px;
+      padding: 0.6rem;
+      font-family: inherit;
+      font-size: 0.86rem;
+      margin: 0.35rem 0 0.6rem;
+      background: #fff;
+    }
+    #billing-voice-input { min-height: 92px; resize: vertical; }
     .workspace-table-wrap { border: 1px solid #d8dfeb; border-radius: 12px; background: #fff; padding: 0.9rem; }
     .workspace-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.7rem; }
     .kpi-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.5rem; }
@@ -173,9 +186,12 @@
     <nav id="sector-nav" class="sector-nav"></nav>
     <div class="rail-card">
       <h3>Quick Links</h3>
-      <a href="/gst-copilot">Open GST Copilot</a>
-      <a href="/app">Open ERP Desk</a>
-      <a href="/user-register">Register Another Account</a>
+      <a href="/smart-billing">⚡ Smart Billing</a>
+      <a href="/gst-copilot">🤖 GST Copilot</a>
+      <a href="/gst-demo">📄 GST Demo</a>
+      <a href="/app">📋 ERP Desk</a>
+      <a href="/user-register">➕ Register Account</a>
+      <a href="/admin-user-management">⚙️ Admin Panel</a>
     </div>
   </aside>
 
@@ -205,14 +221,16 @@
     <section class="panel gst-workspace-panel">
       <div class="panel-head">
         <h2>GST Invoice Workspace</h2>
-        <p>Upload, validate, reconcile, and export</p>
+        <p>Upload, OCR, voice bill entry, reconcile, and export</p>
       </div>
 
       <div class="workspace-grid">
         <article class="workspace-card">
-          <h3>Upload Invoice</h3>
-          <p>Paste invoice JSON for demo upload</p>
-          <textarea id="invoice-json-input" rows="5" placeholder='{"invoice_number":"INV-2001","gstin":"29ABCDE1234F2Z5","amount":12000,"gst":2160}'></textarea>
+          <h3>Invoice OCR</h3>
+          <p>Upload an invoice image and extract GSTIN, invoice number, date, taxable value, and tax amounts.</p>
+          <input id="invoice-image-input" type="file" accept="image/*" />
+          <button class="val-btn" onclick="ocrInvoiceImage()">Run Invoice OCR</button>
+          <textarea id="invoice-json-input" rows="5" placeholder='{"invoice_number":"INV-2001","gstin":"29ABCDE1234F2Z5","taxable_value":12000,"tax_amount":2160,"total_amount":14160}'></textarea>
           <button class="val-btn" onclick="uploadInvoice()">Upload</button>
         </article>
 
@@ -220,6 +238,24 @@
           <h3>Live Summary</h3>
           <div id="kpi-summary"></div>
           <button class="val-btn" onclick="loadDashboardSummary()">Refresh Summary</button>
+        </article>
+      </div>
+
+      <div class="workspace-grid">
+        <article class="workspace-card" style="border:2px solid #0f766e">
+          <h3>⚡ Smart Billing</h3>
+          <p>Voice or scan a bill → structured GST invoice in seconds. Supports Hinglish speech, camera capture, and offline OCR.</p>
+          <div class="workspace-actions" style="margin-top:.6rem">
+            <a href="/smart-billing" style="display:inline-block;padding:.55rem 1.1rem;background:linear-gradient(135deg,#0f766e,#065f46);color:#fff;border-radius:8px;font-weight:700;font-size:.85rem;text-decoration:none">🚀 Open Smart Billing</a>
+          </div>
+        </article>
+
+        <article class="workspace-card" style="border:2px solid #0369a1">
+          <h3>📷 Scan Bill (OCR)</h3>
+          <p>Upload or photograph a purchase bill. The AI extracts items, quantities, prices and GST automatically — you review before saving.</p>
+          <div class="workspace-actions" style="margin-top:.6rem">
+            <a href="/smart-billing" style="display:inline-block;padding:.55rem 1.1rem;background:linear-gradient(135deg,#0369a1,#1e40af);color:#fff;border-radius:8px;font-weight:700;font-size:.85rem;text-decoration:none">📷 Open Bill Scanner</a>
+          </div>
         </article>
       </div>
 
@@ -506,6 +542,56 @@
     document.getElementById('val-result').innerHTML = html;
   }
 
+  function safeJsonParse(text) {
+    try {
+      return JSON.parse(text || '{}');
+    } catch (err) {
+      return {};
+    }
+  }
+
+  function fileToDataUrl(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => reject(new Error('Unable to read file'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function ensureMicrophoneAccess() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      return { ok: false, message: 'Microphone APIs are not available in this browser.' };
+    }
+
+    if (!navigator.permissions || !navigator.permissions.query) {
+      return { ok: true, permission: 'unknown' };
+    }
+
+    try {
+      const permission = await navigator.permissions.query({ name: 'microphone' });
+      if (permission.state === 'denied') {
+        return {
+          ok: false,
+          message: 'Microphone permission is denied for this site. Enable it in browser settings for localhost:8085 and retry.',
+        };
+      }
+
+      if (permission.state === 'prompt') {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          stream.getTracks().forEach(track => track.stop());
+        } catch (err) {
+          return { ok: false, message: 'Microphone permission was not granted.' };
+        }
+      }
+
+      return { ok: true, permission: permission.state };
+    } catch (err) {
+      return { ok: false, message: 'Unable to check microphone permission.' };
+    }
+  }
+
   async function apiCall(method, payload) {
     const response = await fetch('/api/method/' + method, {
       method: 'POST',
@@ -514,6 +600,112 @@
     });
     const data = await response.json();
     return data.message || data;
+  }
+
+  async function ocrInvoiceImage() {
+    const fileInput = document.getElementById('invoice-image-input');
+    const file = fileInput.files && fileInput.files[0];
+    if (!file) {
+      document.getElementById('ocr-preview').innerHTML = '<p>Please choose an invoice image first.</p>';
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      document.getElementById('ocr-preview').innerHTML = '<p>Invoice OCR currently supports image files such as PNG and JPG.</p>';
+      return;
+    }
+
+    const dataUrl = await fileToDataUrl(file);
+    const res = await apiCall('india_compliance.gst_india.api.portal_management.gst_ocr_invoice', {
+      image_base64: dataUrl,
+      filename: file.name,
+    });
+
+    const data = (res && res.data) || {};
+    document.getElementById('invoice-json-input').value = JSON.stringify(data, null, 2);
+    document.getElementById('ocr-preview').innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+    document.getElementById('workspace-output').innerHTML = '<pre>' + JSON.stringify(res, null, 2) + '</pre>';
+  }
+
+  function parseVoiceBilling(text) {
+    const current = safeJsonParse(document.getElementById('invoice-json-input').value);
+    const transcript = (text || document.getElementById('billing-voice-input').value || '').trim();
+    if (!transcript) {
+      return current;
+    }
+
+    const invoiceMatch = transcript.match(/(?:invoice(?: number| no)?|bill(?: number| no)?|inv(?:oice)?)\s*[:#-]?\s*([A-Z0-9\-/]+)/i);
+    const gstinMatch = transcript.match(/\b([0-9A-Z]{15})\b/i);
+    const dateMatch = transcript.match(/(?:date|invoice date)\s*[:#-]?\s*([0-9]{1,2}[\-/][0-9]{1,2}[\-/][0-9]{2,4}|[0-9]{1,2}\s+[A-Za-z]{3,9}\s+[0-9]{4})/i);
+    const amountMatch = transcript.match(/(?:grand total|invoice total|total amount|amount)\s*[:#-]?\s*(?:rs\.?|inr|₹)?\s*([0-9,]+(?:\.[0-9]{1,2})?)/i);
+    const gstMatch = transcript.match(/(?:gst amount|tax amount|gst)\s*[:#-]?\s*(?:rs\.?|inr|₹)?\s*([0-9,]+(?:\.[0-9]{1,2})?)/i);
+
+    return {
+      ...current,
+      invoice_number: invoiceMatch ? invoiceMatch[1] : current.invoice_number || '',
+      gstin: gstinMatch ? gstinMatch[1].toUpperCase() : current.gstin || '',
+      date: dateMatch ? dateMatch[1] : current.date || '',
+      amount: amountMatch ? Number(String(amountMatch[1]).replace(/,/g, '')) : current.amount || 0,
+      gst: gstMatch ? Number(String(gstMatch[1]).replace(/,/g, '')) : current.gst || 0,
+      source: 'voice',
+      notes: transcript,
+      status: current.status || 'pending',
+    };
+  }
+
+  function applyVoiceBilling(text) {
+    const payload = parseVoiceBilling(text);
+    document.getElementById('invoice-json-input').value = JSON.stringify(payload, null, 2);
+    document.getElementById('workspace-output').innerHTML = '<pre>' + JSON.stringify(payload, null, 2) + '</pre>';
+  }
+
+  function startVoiceBilling() {
+    const voiceField = document.getElementById('billing-voice-input');
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      voiceField.value = 'Voice input is not supported in this browser.';
+      return;
+    }
+
+    ensureMicrophoneAccess().then(access => {
+      if (!access.ok) {
+        voiceField.value = access.message || 'Microphone access is not available.';
+        return;
+      }
+
+      try {
+        const rec = new SR();
+        rec.lang = 'en-IN';
+        rec.interimResults = false;
+        rec.continuous = false;
+        rec.onresult = ev => {
+          const transcript = ev.results[0][0].transcript;
+          voiceField.value = transcript;
+          applyVoiceBilling(transcript);
+        };
+        rec.onerror = event => {
+          const errorName = (event && event.error) || 'unknown';
+          if (errorName === 'not-allowed' || errorName === 'service-not-allowed') {
+            voiceField.value = 'Microphone access is denied for this site. Enable it and retry.';
+          } else if (errorName === 'network') {
+            voiceField.value = 'Voice recognition service is unavailable right now.';
+          } else {
+            voiceField.value = 'Voice input failed (' + errorName + '). Please retry or type the billing details.';
+          }
+        };
+        rec.onnomatch = () => {
+          voiceField.value = 'Could not understand the spoken invoice details. Please retry or type them.';
+        };
+        rec.onend = () => {
+          if (!voiceField.value || voiceField.value === 'Click Start Voice Billing and speak the invoice fields...') {
+            voiceField.value = 'Voice capture ended. Speak again or type the invoice details.';
+          }
+        };
+        rec.start();
+      } catch (err) {
+        voiceField.value = 'Voice input could not start: ' + err.message;
+      }
+    });
   }
 
   function renderInvoices(rows) {
