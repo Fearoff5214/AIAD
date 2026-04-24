@@ -224,22 +224,7 @@
         <p>Upload, OCR, voice bill entry, reconcile, and export</p>
       </div>
 
-      <div class="workspace-grid">
-        <article class="workspace-card">
-          <h3>Invoice OCR</h3>
-          <p>Upload an invoice image and extract GSTIN, invoice number, date, taxable value, and tax amounts.</p>
-          <input id="invoice-image-input" type="file" accept="image/*" />
-          <button class="val-btn" onclick="ocrInvoiceImage()">Run Invoice OCR</button>
-          <textarea id="invoice-json-input" rows="5" placeholder='{"invoice_number":"INV-2001","gstin":"29ABCDE1234F2Z5","taxable_value":12000,"tax_amount":2160,"total_amount":14160}'></textarea>
-          <button class="val-btn" onclick="uploadInvoice()">Upload</button>
-        </article>
 
-        <article class="workspace-card">
-          <h3>Live Summary</h3>
-          <div id="kpi-summary"></div>
-          <button class="val-btn" onclick="loadDashboardSummary()">Refresh Summary</button>
-        </article>
-      </div>
 
       <div class="workspace-grid">
         <article class="workspace-card" style="border:2px solid #0f766e">
@@ -393,77 +378,107 @@
   const featureGrid = document.getElementById("feature-grid");
   const actionGrid = document.getElementById("action-grid");
 
-  const sectorActions = {
-    Manufacturing: [
-      { title: "Create Production Order", description: "Start planned production jobs and monitor work orders.", url: "/app/production-order" },
-      { title: "Manage BOM", description: "Update bill of materials and verify component usage.", url: "/app/bom" },
-      { title: "Batch Inventory", description: "Track stock movement by batch and warehouse.", url: "/app/batch" }
-    ],
-    Wholesale: [
-      { title: "Create Sales Order", description: "Capture distributor orders and process at scale.", url: "/app/sales-order" },
-      { title: "Set Pricing Rules", description: "Define quantity‑based pricing for customers.", url: "/app/pricing-rule" },
-      { title: "Generate E‑Way Bills", description: "Create and track transport‑ready e‑way bills.", url: "/app/eway-bill" }
-    ],
-    Other: [
-      { title: "Add Customer", description: "Maintain your customer master data.", url: "/app/customer" },
-      { title: "Create Sales Invoice", description: "Generate GST‑compliant invoices quickly.", url: "/app/sales-invoice" },
-      { title: "Review GST Utilities", description: "Use GST reports and filing support tools.", url: "/app/query-report/GSTR-1" }
-    ]
+  // ─── ERPNext module definitions (icon, description, /app URL, colour) ───────
+  const MODULE_DEFS = {
+    "Accounting":     { icon:"💰", label:"Accounting",       url:"/app/general-ledger",          color:"#0369a1", desc:"Journal entries, ledger, P&L, balance sheet" },
+    "GST India":      { icon:"🇮🇳", label:"GST India",        url:"/app/gst-settings",             color:"#0f766e", desc:"E-invoice, GSTR filing, HSN codes, GST reports" },
+    "Buying":         { icon:"🛒", label:"Buying",           url:"/app/purchase-order",           color:"#7c3aed", desc:"Purchase orders, suppliers, RFQs" },
+    "Selling":        { icon:"🏷️", label:"Selling",          url:"/app/sales-order",              color:"#db2777", desc:"Sales orders, quotations, customers" },
+    "Manufacturing":  { icon:"🏭", label:"Manufacturing",   url:"/app/production-plan",          color:"#b45309", desc:"Production plans, work orders, BOM" },
+    "Stock":          { icon:"📦", label:"Stock",            url:"/app/stock-ledger-entry",       color:"#15803d", desc:"Stock movement, warehouses, inventory reports" },
+    "Quality":        { icon:"✅", label:"Quality",          url:"/app/quality-inspection",      color:"#0891b2", desc:"Quality inspections, control procedures" },
+    "Projects":       { icon:"📋", label:"Projects",         url:"/app/project",                  color:"#7c3aed", desc:"Project tasks, timesheets, Gantt" },
+    "Support":        { icon:"🎧", label:"Support",          url:"/app/issue",                    color:"#dc2626", desc:"Customer issues, service tickets" },
+    "CRM":            { icon:"🤝", label:"CRM",              url:"/app/lead",                     color:"#ea580c", desc:"Leads, opportunities, pipeline" },
+    "Pricing Rules":  { icon:"💲", label:"Pricing Rules",    url:"/app/pricing-rule",             color:"#4f46e5", desc:"Quantity-based and customer pricing" },
+    "GST and E-Invoice Automation": { icon:"📄", label:"E-Invoice", url:"/app/e-invoice-log",    color:"#0f766e", desc:"Auto-generate IRN, QR codes, e-invoice bulk" },
+    "E-Way Bill":     { icon:"🚚", label:"E-Way Bill",        url:"/app/e-way-bill-log",           color:"#92400e", desc:"Generate, cancel, and track e-way bills" },
   };
 
-  const featureHints = {
-    "Production Order Dashboard": "Track production throughput, open jobs, and output variances.",
-    "BOM and Material Planning": "Plan material requirements before work order release.",
-    "Batch and Inventory Tracking": "Monitor inventory by batch and warehouse movement.",
-    "GST and E‑Invoice Automation": "Automate invoice generation with GST‑compliant data.",
-    "Bulk Order Management": "Handle high‑volume customer orders with fewer clicks.",
-    "Distributor Pricing Rules": "Apply customer and quantity‑specific pricing strategies.",
-    "High‑volume Invoicing": "Generate and post invoices efficiently at scale.",
-    "GST and E‑Way Bill Automation": "Speed up bill generation and transport compliance.",
-    "Customer Management": "Maintain customer records and contact details centrally.",
-    "Sales and Purchase Tracking": "Track all commercial transactions in one place.",
-    "GST Returns Utilities": "Prepare and verify GST return‑related data."
+  // ─── Recommended quick actions per sector ────────────────────────────────────
+  const sectorActions = {
+    Manufacturing: [
+      { title:"Production Plan",    description:"Create and manage production plans and work orders.",          url:"/app/production-plan" },
+      { title:"Bill of Materials",  description:"Update BOM and verify component usage.",                       url:"/app/bom" },
+      { title:"Quality Inspection",description:"Run quality checks on finished goods and inward items.",         url:"/app/quality-inspection" },
+      { title:"Stock Ledger",       description:"Track inventory movement across warehouses.",                  url:"/app/stock-ledger-entry" },
+      { title:"Purchase Order",     description:"Create and manage raw material purchase orders.",              url:"/app/purchase-order" },
+      { title:"Sales Invoice",      description:"Generate GST-compliant sales invoices with e-invoice.",        url:"/app/sales-invoice" },
+    ],
+    Wholesale: [
+      { title:"Sales Order",        description:"Capture bulk distributor orders at scale.",                    url:"/app/sales-order" },
+      { title:"Purchase Order",     description:"Create and manage inward purchase orders.",                    url:"/app/purchase-order" },
+      { title:"Pricing Rules",      description:"Define quantity-based and customer-based pricing.",            url:"/app/pricing-rule" },
+      { title:"Stock Ledger",       description:"Monitor stock movement and warehouse inventory.",              url:"/app/stock-ledger-entry" },
+      { title:"E-Way Bill",         description:"Generate and track transport-ready e-way bills.",             url:"/app/e-way-bill-log" },
+      { title:"Sales Invoice",      description:"High-volume GST-compliant invoicing.",                        url:"/app/sales-invoice" },
+    ],
+  };
+
+  // ─── Sector to module list ────────────────────────────────────────────────────
+  const sectorModules = {
+    Manufacturing: ["Accounting","GST India","Buying","Selling","Manufacturing","Stock","Quality","Projects","Support","CRM","GST and E-Invoice Automation","E-Way Bill"],
+    Wholesale:     ["Accounting","GST India","Buying","Selling","Stock","CRM","Pricing Rules","GST and E-Invoice Automation","E-Way Bill"],
   };
 
   function renderSectorNav(industry) {
     const links = [
-      { label: "Dashboard Home", url: "/user-portal" },
-      { label: "GST Copilot", url: "/gst-copilot" }
+      { label:"🏠 Dashboard",      url:"/user-portal" },
+      { label:"🤖 GST Copilot",    url:"/gst-copilot" },
+      { label:"⚡ Smart Billing",  url:"/smart-billing" },
+      { label:"📄 GST Demo",       url:"/gst-demo" },
     ];
-    (sectorActions[industry] || sectorActions.Other).forEach(item => links.push({ label: item.title, url: item.url }));
+    const modules = sectorModules[industry] || sectorModules.Wholesale;
+    modules.forEach(m => {
+      const def = MODULE_DEFS[m];
+      if (def) links.push({ label: def.icon + " " + def.label, url: def.url });
+    });
     navEl.innerHTML = "";
     links.forEach(l => {
       const a = document.createElement("a");
       a.href = l.url;
       a.textContent = l.label;
+      a.style.cssText = "display:block;padding:.35rem .5rem;border-radius:6px;font-size:.82rem;color:inherit;text-decoration:none;transition:background .15s";
+      a.onmouseover = () => a.style.background = "rgba(255,255,255,.08)";
+      a.onmouseout  = () => a.style.background = "";
       navEl.appendChild(a);
     });
   }
 
   function renderFeatureCards(features) {
     featureGrid.innerHTML = "";
-    features.forEach(f => {
+    // Use the industry determined from features list, fall back to global industry
+    const industry = document.getElementById("industry-pill").textContent || "Wholesale";
+    const modules = sectorModules[industry] || sectorModules.Wholesale;
+    modules.forEach(m => {
+      const def = MODULE_DEFS[m];
+      if (!def) return;
       const card = document.createElement("article");
       card.className = "feature-card";
-      card.innerHTML = `<h3>${f}</h3><p>${featureHints[f] || "Feature enabled for your subscription."}</p>`;
+      card.style.cssText = `cursor:pointer;border-top:3px solid ${def.color};transition:transform .15s,box-shadow .15s`;
+      card.onmouseover = () => { card.style.transform="translateY(-3px)"; card.style.boxShadow="0 6px 20px rgba(0,0,0,.12)"; };
+      card.onmouseout  = () => { card.style.transform=""; card.style.boxShadow=""; };
+      card.onclick = () => window.location.href = def.url;
+      card.innerHTML = `
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.35rem">
+          <span style="font-size:1.4rem">${def.icon}</span>
+          <h3 style="margin:0;font-size:.92rem;color:${def.color}">${def.label}</h3>
+        </div>
+        <p style="margin:0;font-size:.78rem;color:#6b7280">${def.desc}</p>
+        <a href="${def.url}" style="display:inline-block;margin-top:.5rem;font-size:.75rem;font-weight:700;color:${def.color};text-decoration:none">Open in ERP →</a>`;
       featureGrid.appendChild(card);
     });
-    if (!features.length) {
-      const empty = document.createElement("article");
-      empty.className = "feature-card";
-      empty.innerHTML = "<h3>No features configured</h3><p>Contact your administrator.</p>";
-      featureGrid.appendChild(empty);
-    }
-    document.getElementById("feature-count").textContent = `${features.length} feature${features.length === 1 ? "" : "s"} enabled`;
+    const count = modules.length;
+    document.getElementById("feature-count").textContent = `${count} module${count === 1?"":"s"} enabled`;
   }
 
   function renderActionCards(industry) {
-    const actions = sectorActions[industry] || sectorActions.Other;
+    const actions = sectorActions[industry] || sectorActions.Wholesale;
     actionGrid.innerHTML = "";
     actions.forEach(a => {
       const card = document.createElement("article");
       card.className = "action-card";
-      card.innerHTML = `<h3>${a.title}</h3><p>${a.description}</p><a href="${a.url}">Open</a>`;
+      card.innerHTML = `<h3>${a.title}</h3><p>${a.description}</p><a href="${a.url}">Open →</a>`;
       actionGrid.appendChild(card);
     });
   }
@@ -474,15 +489,15 @@
       const payload = await resp.json();
       const data = payload.message || {};
       if (!data.tenant) {
-        document.getElementById("company-title").textContent = "No active tenant found";
-        document.getElementById("welcome-line").textContent = "Please ask your administrator to activate your portal tenant.";
-        document.getElementById("industry-pill").textContent = "Unassigned";
+        document.getElementById("company-title").textContent = "Welcome to Fearoff AIAD";
+        document.getElementById("welcome-line").textContent = "Register your company to unlock sector-specific modules.";
+        document.getElementById("industry-pill").textContent = "Wholesale";
         renderFeatureCards([]);
-        renderActionCards("Other");
-        renderSectorNav("Other");
+        renderActionCards("Wholesale");
+        renderSectorNav("Wholesale");
         return;
       }
-      const industry = data.industry_type || "Other";
+      const industry = data.industry_type === "Other" ? "Wholesale" : (data.industry_type || "Wholesale");
       document.getElementById("company-title").textContent = data.company_name || "My Company";
       document.getElementById("industry-pill").textContent = industry;
       document.getElementById("welcome-line").textContent = `Welcome ${data.tenant}. Your workspace is tuned for ${industry.toLowerCase()} operations.`;
@@ -593,9 +608,16 @@
   }
 
   async function apiCall(method, payload) {
+    const csrfToken = (typeof frappe !== 'undefined' && frappe.csrf_token)
+      ? frappe.csrf_token
+      : (document.cookie.match(/csrf_token=([^;]+)/) || [])[1] || 'no-token';
     const response = await fetch('/api/method/' + method, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Frappe-CSRF-Token': csrfToken,
+        'X-Requested-With': 'XMLHttpRequest',
+      },
       body: JSON.stringify(payload || {})
     });
     const data = await response.json();
@@ -616,15 +638,79 @@
     }
 
     const dataUrl = await fileToDataUrl(file);
-    const res = await apiCall('india_compliance.gst_india.api.portal_management.gst_ocr_invoice', {
+    const previewEl = document.getElementById('ocr-preview');
+    const jsonEl = document.getElementById('invoice-json-input');
+    previewEl.innerHTML = '<p style="color:#0f766e;font-weight:600">⏳ Scanning invoice… (1–3 seconds)</p>';
+
+    const res = await apiCall('india_compliance.gst_india.api.ocr_billing.process_ocr', {
       image_base64: dataUrl,
       filename: file.name,
     });
 
-    const data = (res && res.data) || {};
-    document.getElementById('invoice-json-input').value = JSON.stringify(data, null, 2);
-    document.getElementById('ocr-preview').innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
-    document.getElementById('workspace-output').innerHTML = '<pre>' + JSON.stringify(res, null, 2) + '</pre>';
+    if (!res || !res.success) {
+      previewEl.innerHTML = '<p style="color:#dc2626">❌ OCR failed: ' + (res && res.error || 'Unknown error') + '</p>';
+      return;
+    }
+
+    const d = res.data || {};
+    const items = d.items || [];
+    const totals = d.totals || {};
+
+    // Populate the JSON upload field with the extracted data
+    jsonEl.value = JSON.stringify({
+      invoice_number: totals.invoice_number || '',
+      gstin: totals.gstin || '',
+      date: totals.date || '',
+      taxable_value: totals.computed_subtotal || 0,
+      tax_amount: totals.computed_gst || 0,
+      total_amount: totals.computed_grand_total || 0,
+    }, null, 2);
+
+    // Show a readable result card
+    let rows = items.map((it, i) => `
+      <tr style="border-bottom:1px solid #e5e7eb">
+        <td style="padding:.35rem .5rem">${i+1}</td>
+        <td style="padding:.35rem .5rem">${it.name || ''}</td>
+        <td style="padding:.35rem .5rem">${it.quantity || 1}</td>
+        <td style="padding:.35rem .5rem">₹${it.price || 0}</td>
+        <td style="padding:.35rem .5rem">${it.hsn_code || '-'}</td>
+        <td style="padding:.35rem .5rem">${it.gst_rate || 0}%</td>
+        <td style="padding:.35rem .5rem;font-weight:700">₹${it.total || 0}</td>
+      </tr>`).join('');
+
+    const issues = (d.validation && d.validation.issues || []);
+    const issueHtml = issues.length
+      ? '<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:.6rem 1rem;margin-top:.5rem;font-size:.8rem;color:#92400e">⚠ ' + issues.join('<br>⚠ ') + '</div>'
+      : '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:.4rem 1rem;margin-top:.5rem;font-size:.8rem;color:#166534">✅ Validation passed</div>';
+
+    previewEl.innerHTML = `
+      <div style="font-size:.82rem">
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:.5rem">
+          ${totals.invoice_number ? '<span><strong>Inv #</strong> '+totals.invoice_number+'</span>' : ''}
+          ${totals.gstin ? '<span><strong>GSTIN</strong> '+totals.gstin+'</span>' : ''}
+          ${totals.date ? '<span><strong>Date</strong> '+totals.date+'</span>' : ''}
+          <span style="background:#0f766e;color:#fff;padding:.15rem .6rem;border-radius:6px;font-weight:700">${d.bill_type || 'Purchase'}</span>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:.8rem">
+          <thead><tr style="background:#f0fdfa">
+            <th style="padding:.3rem .5rem;text-align:left">#</th>
+            <th style="padding:.3rem .5rem;text-align:left">Item</th>
+            <th style="padding:.3rem .5rem;text-align:left">Qty</th>
+            <th style="padding:.3rem .5rem;text-align:left">Price</th>
+            <th style="padding:.3rem .5rem;text-align:left">HSN</th>
+            <th style="padding:.3rem .5rem;text-align:left">GST%</th>
+            <th style="padding:.3rem .5rem;text-align:left">Total</th>
+          </tr></thead>
+          <tbody>${rows || '<tr><td colspan="7" style="padding:.5rem;color:#6b7280">No line items detected — review below</td></tr>'}</tbody>
+        </table>
+        <div style="text-align:right;margin-top:.4rem;font-weight:700">
+          Subtotal: ₹${totals.computed_subtotal||0} &nbsp;|
+          GST: ₹${totals.computed_gst||0} &nbsp;|
+          <span style="color:#0f766e">Total: ₹${totals.computed_grand_total||0}</span>
+        </div>
+        ${issueHtml}
+        <p style="margin-top:.5rem;font-size:.75rem;color:#6b7280">Review the data above, then click <strong>Upload</strong> to save.</p>
+      </div>`;
   }
 
   function parseVoiceBilling(text) {

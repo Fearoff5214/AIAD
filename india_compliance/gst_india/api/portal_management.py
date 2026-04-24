@@ -14,21 +14,20 @@ from frappe.utils import now_datetime
 
 TAILORED_FEATURES = {
     "Manufacturing": [
-        "Production Order Dashboard",
-        "BOM and Material Planning",
-        "Batch and Inventory Tracking",
-        "GST and E-Invoice Automation",
+        # Always-on core modules
+        "Accounting", "GST India", "Buying", "Selling",
+        # Manufacturing-specific
+        "Manufacturing", "Stock", "Quality", "Projects", "Support", "CRM",
+        # GST tools
+        "GST and E-Invoice Automation", "E-Way Bill",
     ],
     "Wholesale": [
-        "Bulk Order Management",
-        "Distributor Pricing Rules",
-        "High-volume Invoicing",
-        "GST and E-Way Bill Automation",
-    ],
-    "Other": [
-        "Customer Management",
-        "Sales and Purchase Tracking",
-        "GST Returns Utilities",
+        # Always-on core modules
+        "Accounting", "GST India", "Buying", "Selling",
+        # Wholesale-specific
+        "Stock", "CRM", "Pricing Rules",
+        # GST tools
+        "GST and E-Invoice Automation", "E-Way Bill",
     ],
 }
 
@@ -327,9 +326,9 @@ def register_portal_user(full_name, email, password, company_name, industry_type
     if frappe.db.exists("User", email):
         frappe.throw(_("A user with this email already exists"))
 
-    industry_type = (industry_type or "Other").strip().title()
+    industry_type = (industry_type or "Wholesale").strip().title()
     if industry_type not in TAILORED_FEATURES:
-        industry_type = "Other"
+        industry_type = "Wholesale"
 
     user = frappe.get_doc(
         {

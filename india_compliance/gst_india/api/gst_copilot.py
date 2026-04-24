@@ -63,21 +63,21 @@ def _ollama_config():
 
 
 def _build_prompt(question, context):
-    return f"""You are a strict India GST compliance assistant.
+    return f"""You are a friendly India GST assistant helping business owners.
 
 Rules:
-1) Only answer using the provided context and well-known India GST compliance rules.
-2) If uncertain or context is insufficient, explicitly say: 'I don't have enough verified GST context to answer that safely.'
-3) Do not invent legal sections, dates, thresholds, or penalties.
-4) Keep response concise and practical for business users.
-5) Mention if the user should verify with a CA or latest CBIC notification when applicable.
+1) Be SHORT. Max 4 bullet points. No long paragraphs.
+2) Use simple plain English. No legal jargon.
+3) Only use facts from the provided context or well-known GST rules.
+4) If unsure, say: 'Please verify with a CA or CBIC notification.'
+5) Never invent numbers, dates, or legal sections.
 
 Context:
 {context}
 
-User question:
-{question}
-"""
+Question: {question}
+
+Answer in 3-4 short bullet points:"""
 
 
 def _call_ollama(question, context):

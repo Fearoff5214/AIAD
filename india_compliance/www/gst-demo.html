@@ -159,8 +159,8 @@ table.inv-tbl td{padding:.65rem .9rem;border-bottom:1px solid #f3f4f6;vertical-a
 </div>
 <div class="val-form" id="val-lines">
   <div class="val-row val-hdr"><div>Item Description</div><div>HSN Code</div><div>Taxable (₹)</div><div>GST Rate (%)</div><div>Tax Charged (₹)</div></div>
-  <div class="val-row"><input placeholder="e.g. Industrial Motor" class="item-name"/><input placeholder="8501" class="item-hsn"/><input type="number" placeholder="60000" class="item-base"/><select class="item-rate"><option value="0">0% (Exempt)</option><option value="5">5%</option><option value="12" selected>12%</option><option value="18">18%</option><option value="28">28%</option></select><input type="number" placeholder="10800" class="item-tax"/></div>
-  <div class="val-row"><input placeholder="e.g. Packing Box" class="item-name"/><input placeholder="4819" class="item-hsn"/><input type="number" placeholder="2000" class="item-base"/><select class="item-rate"><option value="0">0%</option><option value="5">5%</option><option value="12" selected>12%</option><option value="18">18%</option><option value="28">28%</option></select><input type="number" placeholder="240" class="item-tax"/></div>
+  <div class="val-row"><input placeholder="e.g. Industrial Motor" class="item-name" oninput="debounceGST(this)"/><input placeholder="8501" class="item-hsn"/><input type="number" placeholder="60000" class="item-base"/><select class="item-rate"><option value="0">0% (Exempt)</option><option value="5">5%</option><option value="12" selected>12%</option><option value="18">18%</option><option value="28">28%</option></select><input type="number" placeholder="10800" class="item-tax"/></div>
+  <div class="val-row"><input placeholder="e.g. Packing Box" class="item-name" oninput="debounceGST(this)"/><input placeholder="4819" class="item-hsn"/><input type="number" placeholder="2000" class="item-base"/><select class="item-rate"><option value="0">0%</option><option value="5">5%</option><option value="12" selected>12%</option><option value="18">18%</option><option value="28">28%</option></select><input type="number" placeholder="240" class="item-tax"/></div>
 </div>
 <button class="val-btn" onclick="addRow()">+ Add Row</button>
 <button class="val-btn" style="margin-left:.5rem;background:linear-gradient(135deg,#0f766e,#065f46)" onclick="validateInvoice()">🔍 Check Compliance</button>
@@ -179,7 +179,7 @@ function showTab(id,btn){
 function addRow(){
   const c=document.getElementById('val-lines');
   const r=document.createElement('div');r.className='val-row';
-  r.innerHTML='<input placeholder="Item" class="item-name"/><input placeholder="HSN" class="item-hsn"/><input type="number" placeholder="0" class="item-base"/><select class="item-rate"><option value="0">0%</option><option value="5">5%</option><option value="12" selected>12%</option><option value="18">18%</option><option value="28">28%</option></select><input type="number" placeholder="0" class="item-tax"/>';
+  r.innerHTML='<input placeholder="Item" class="item-name" oninput="debounceGST(this)"/><input placeholder="HSN" class="item-hsn"/><input type="number" placeholder="0" class="item-base"/><select class="item-rate"><option value="0">0%</option><option value="5">5%</option><option value="12" selected>12%</option><option value="18">18%</option><option value="28">28%</option></select><input type="number" placeholder="0" class="item-tax"/>';
   c.appendChild(r);
 }
 function validateInvoice(){
@@ -207,5 +207,40 @@ function validateInvoice(){
   else if(ok) html='<div class="ok-item" style="font-weight:700">✅ All line items are GST compliant!</div>'+html;
   else html='<div class="err-item" style="font-weight:700">⚠️ Compliance issues found — review errors below.</div>'+html;
   document.getElementById('val-result').innerHTML=html;
+}
+// ── Auto GST lookup when typing item name ──────────────────────────────────
+const _gstTimers = new WeakMap();
+function debounceGST(input) {
+  if (_gstTimers.has(input)) clearTimeout(_gstTimers.get(input));
+  _gstTimers.set(input, setTimeout(() => lookupGST(input), 500));
+}
+
+async function lookupGST(nameInput) {
+  const name = nameInput.value.trim();
+  if (name.length < 3) return;
+  const row = nameInput.closest('.val-row');
+  const hsnInput = row.querySelector('.item-hsn');
+  const rateSelect = row.querySelector('.item-rate');
+
+  // Show loading hint
+  nameInput.style.borderColor = '#0d9488';
+  try {
+    let csrfToken = "{{ frappe.session.csrf_token }}";
+    if (csrfToken.includes('frappe.session')) csrfToken = '';
+    const resp = await fetch('/api/method/india_compliance.gst_india.api.voice_billing.process_voice', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-Frappe-CSRF-Token': csrfToken, 'X-Requested-With': 'XMLHttpRequest'},
+      body: new URLSearchParams({text: '1 ' + name + ' 100'})
+    });
+    const data = await resp.json();
+    const item = data?.message?.items?.[0];
+    if (item) {
+      if (item.hsn_code && item.hsn_code !== '9999') hsnInput.value = item.hsn_code;
+      const gstRate = parseFloat(item.gst_rate ?? 18);
+      const opt = rateSelect.querySelector(`option[value="${gstRate}"]`);
+      if (opt) { rateSelect.value = gstRate; }
+    }
+  } catch(e) { /* silently ignore */ }
+  nameInput.style.borderColor = '';
 }
 </script>

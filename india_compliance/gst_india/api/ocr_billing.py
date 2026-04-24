@@ -18,17 +18,17 @@ from frappe import _
 
 # ── Image preprocessing + OCR ──────────────────────────────────────────────────
 
-MAX_OCR_PX = 1800  # max dimension — big enough for accuracy, small enough for speed
+MAX_OCR_PX = 2400  # max dimension — high enough for dense invoice tables
+MIN_OCR_PX = 1600  # minimum — aggressively upscale compressed/thumbnail images
 
 
 def _preprocess_image(raw_bytes):
     """
-    Fast pipeline: grayscale → cap size → mild contrast boost.
-    Deskew and heavy filters removed — Tesseract handles slight skew fine.
-    Target: <1s preprocessing on typical phone-camera bills.
+    Image preprocessing pipeline optimised for scanned Indian invoices.
+    Steps: grayscale → aggressive upscale → contrast → sharpness boost.
     """
     try:
-        from PIL import Image, ImageEnhance, ImageOps
+        from PIL import Image, ImageEnhance, ImageOps, ImageFilter
     except ImportError:
         frappe.throw(_("Install Pillow: pip install Pillow"))
 
@@ -37,32 +37,35 @@ def _preprocess_image(raw_bytes):
     # 1. Grayscale
     img = ImageOps.grayscale(img)
 
-    # 2. Cap maximum dimension (avoids huge images killing Tesseract speed)
+    # 2. Resize: upscale small images aggressively, cap huge ones
     w, h = img.size
     longest = max(w, h)
-    if longest > MAX_OCR_PX:
+    if longest < MIN_OCR_PX:
+        scale = MIN_OCR_PX / longest
+        img = img.resize((int(w * scale), int(h * scale)), Image.LANCZOS)
+    elif longest > MAX_OCR_PX:
         scale = MAX_OCR_PX / longest
-        img = img.resize((int(w * scale), int(h * scale)), Image.BILINEAR)
-    elif longest < 800:
-        # Scale up very small images so Tesseract can read them
-        scale = 800 / longest
-        img = img.resize((int(w * scale), int(h * scale)), Image.BILINEAR)
+        img = img.resize((int(w * scale), int(h * scale)), Image.LANCZOS)
 
-    # 3. Mild contrast boost (1.8x is enough; 2.2x can blow out detail)
-    img = ImageEnhance.Contrast(img).enhance(1.8)
+    # 3. Contrast boost — helps text stand out from background
+    img = ImageEnhance.Contrast(img).enhance(2.0)
+
+    # 4. Sharpness boost — critical for small/compressed text
+    img = ImageEnhance.Sharpness(img).enhance(2.5)
 
     return img
 
 
 def _run_tesseract(img):
-    """Run Tesseract OCR — psm 6 is the fastest reliable mode for structured bills."""
+    """Run Tesseract OCR. psm 4 handles multi-column invoice tables well."""
     try:
         import pytesseract
     except ImportError:
         frappe.throw(_("Install pytesseract: pip install pytesseract"))
 
-    # psm 6: assume a single uniform block of text — fast and accurate for invoices
-    config = "--psm 6 --oem 1"
+    # psm 4: assume a single column of text of variable sizes (good for tabular invoices)
+    # Try psm 6 as fallback too if needed
+    config = "--psm 4 --oem 1"
     return pytesseract.image_to_string(img, config=config)
 
 
@@ -70,12 +73,13 @@ def _run_tesseract(img):
 
 def _normalize_text(text):
     """Clean raw OCR output."""
-    # Remove non-printable
+    # Remove non-printable characters except ₹ and newlines
     text = re.sub(r"[^\x20-\x7E₹\n]", " ", text)
-    # Collapse multiple spaces
+    # Collapse multiple spaces into one
     text = re.sub(r"[ \t]{2,}", " ", text)
-    # Fix common OCR mistakes
-    text = text.replace("|", "1").replace("l", "l").replace("O", "0")
+    # Fix common OCR number mistakes in clearly numeric contexts only
+    # Note: Do NOT replace O→0 globally — corrupts item names like "Tools"
+    text = text.replace("|", "I")
     return text.strip()
 
 
@@ -90,60 +94,131 @@ def _extract_number_from_token(tok):
 
 def _parse_line_items(lines):
     """
-    Heuristic line-item extractor.
-    Looks for lines matching: [Item Name] [Qty] [Price]
+    Dual-mode OCR line item parser.
+    Mode A (Service Invoice): Detects "Label: Amount" rows — e.g. packers/movers, freight bills.
+    Mode B (Product Invoice): Token-based column extractor for tabular product invoices.
+    Auto-detects which mode to use based on invoice structure.
     """
-    items = []
-    item_pattern = re.compile(
-        r"^(.+?)\s+"                     # item name (greedy left)
-        r"(\d+(?:\.\d+)?)\s*"            # quantity
-        r"(?:kg|gm|ltr|ml|pcs|nos|x)?\s*"  # optional unit
-        r"(\d{1,6}(?:\.\d{1,2})?)$",    # price
-        re.IGNORECASE,
-    )
-    # Also match: "Rice 100" (qty=1 assumed) or "2 Rice 100"
-    simple_price = re.compile(
-        r"^(?:(\d+(?:\.\d+)?)\s+)?(.+?)\s+(\d{1,6}(?:\.\d{1,2})?)$",
-        re.IGNORECASE,
-    )
+    # Words that indicate a summary/tax row — skip these as line items
+    SKIP_ALWAYS = {"total", "grand", "subtotal", "sgst", "cgst", "igst",
+                   "thank", "rupees", "note", "interest", "gstin", "bill no",
+                   "invoice no", "date", "mobile", "website", "email"}
 
+    # Words that indicate a service charge row — valid line items in Mode A
+    SERVICE_CHARGE_WORDS = {
+        "packing", "transportation", "transport", "loading", "unloading",
+        "delivery", "handling", "labour", "insurance", "service", "bilty",
+        "freight", "octroi", "toll", "ngt", "fuel", "surcharge", "charge"
+    }
+
+    # ── Detect invoice mode ───────────────────────────────────────────────────
+    # Count how many lines look like "Label: Amount" (service mode)
+    service_score = sum(
+        1 for ln in lines
+        if re.search(r'[A-Za-z\s]{4,}\s*[:@]?\s*(?:Rs\.?|₹)?\s*[\d,]+(?:\.\d{1,2})?', ln)
+        and any(w in ln.lower() for w in SERVICE_CHARGE_WORDS)
+    )
+    # Count lines that look like multi-column product rows: 3+ numbers on one line
+    product_score = sum(
+        1 for ln in lines
+        if len(re.findall(r'\b\d+(?:\.\d+)?\b', ln)) >= 3
+    )
+    service_mode = service_score >= 2 or (service_score >= 1 and service_score >= product_score // 2)
+
+    items = []
+
+    # ── MODE A: Service / Freight Invoice ─────────────────────────────────────
+    if service_mode:
+        charge_pattern = re.compile(
+            r'([A-Za-z][A-Za-z\s&]{2,}?)\s*(?:Charge|Tax|Fee|Cost)?\s*[@:]?\s*'
+            r'(?:\d+\s*%\s*)?'        # optional percentage like "5%"
+            r'(?:Rs\.?|₹)?\s*'
+            r'([\d,]+(?:\.\d{1,2})?)',
+            re.IGNORECASE
+        )
+        for line in lines:
+            line = line.strip()
+            if len(line) < 4:
+                continue
+            lw = line.lower()
+            # Always skip summary/tax lines
+            if any(w in lw for w in SKIP_ALWAYS):
+                continue
+            # Must contain a service charge keyword
+            if not any(w in lw for w in SERVICE_CHARGE_WORDS):
+                continue
+            # Skip lines that say "include" instead of an amount
+            if "include" in lw or "inclusive" in lw:
+                continue
+
+            m = charge_pattern.search(line)
+            if m:
+                label = m.group(1).strip().title()
+                raw_amount = m.group(2).replace(",", "")
+                try:
+                    amount = float(raw_amount)
+                except ValueError:
+                    continue
+                if amount <= 0:
+                    continue
+                items.append({
+                    "name": label,
+                    "quantity": 1.0,
+                    "unit": "service",
+                    "price": amount
+                })
+        return items
+
+    # ── MODE B: Product / Columnar Invoice ───────────────────────────────────
     skip_words = {"total", "grand", "subtotal", "gst", "cgst", "sgst", "igst",
                   "tax", "bill", "invoice", "amount", "balance", "discount",
-                  "thank", "phone", "gstin", "date", "name", "addr"}
+                  "thank", "phone", "gstin", "date", "name", "addr", "freight"}
 
     for line in lines:
         line = line.strip()
-        if len(line) < 4:
+        if len(line) < 5:
             continue
-        # Skip header/footer lines
-        first_word = line.split()[0].lower() if line.split() else ""
-        if first_word in skip_words:
-            continue
-
-        m = item_pattern.match(line)
-        if m:
-            item_name, qty_str, price_str = m.group(1), m.group(2), m.group(3)
-            items.append({
-                "name": item_name.strip().title(),
-                "quantity": float(qty_str),
-                "unit": "pcs",
-                "price": float(price_str),
-            })
+        first_words = " ".join(line.split()[:3]).lower()
+        if any(w in first_words for w in skip_words):
             continue
 
-        m2 = simple_price.match(line)
-        if m2:
-            qty_str = m2.group(1)
-            item_name = m2.group(2)
-            price_str = m2.group(3)
-            if item_name.lower().split()[0] in skip_words:
+        tokens = line.split()
+        text_parts = []
+        trailing_numbers = []
+        found_text = False
+
+        for t in reversed(tokens):
+            clean_t = re.sub(r'[₹,]', '', t).replace('Rs.', '').replace('Rs', '')
+            is_num = False
+            try:
+                val = float(clean_t)
+                is_num = True
+            except ValueError:
+                pass
+            if is_num and not found_text:
+                trailing_numbers.insert(0, val)
+            else:
+                if t.lower() not in ['pcs', 'nos', 'kg', 'ltr', 'x', 'gm', '-']:
+                    found_text = True
+                    text_parts.insert(0, t)
+
+        if len(text_parts) > 0 and len(trailing_numbers) >= 2:
+            name = " ".join(text_parts)
+            name = re.sub(r'^\d+[\.)]?\s*', '', name).strip()
+            if len(name) < 3:
                 continue
-            qty = float(qty_str) if qty_str else 1.0
+            start_idx = 0
+            if len(trailing_numbers) >= 3 and trailing_numbers[0] >= 1000 and trailing_numbers[0].is_integer():
+                start_idx = 1
+            qty = trailing_numbers[start_idx]
+            if qty <= 0:
+                qty = 1.0
+            price = trailing_numbers[start_idx + 1] if len(trailing_numbers) > start_idx + 1 else trailing_numbers[-1]
             items.append({
-                "name": item_name.strip().title(),
-                "quantity": qty,
-                "unit": "pcs",
-                "price": float(price_str),
+                "name": name.title(),
+                "quantity": float(qty),
+                "unit": "nos",
+                "price": float(price)
             })
 
     return items
@@ -227,21 +302,77 @@ def _classify_bill(items, totals, text):
 
 
 def _enrich_items(items):
-    """Add HSN + GST rate to each extracted item using the voice_billing cache."""
+    """Add HSN + GST rate to each extracted item.
+    Priority:
+    1. GST rate encoded in the item name (e.g. 'Walnuts 5% Tax Item' → 5%)
+       Also handles Tesseract % misreads: '5%6', '56', '3 6 Tax'
+    2. HSN-based lookup from voice_billing knowledge base
+    3. Default 18% fallback
+    """
     try:
         from india_compliance.gst_india.api.voice_billing import _get_hsn_and_gst
     except Exception:
         _get_hsn_and_gst = lambda n: ("9999", 18)  # noqa
 
+    # Known valid GST rates as a set for validation
+    VALID_GST_RATES = {0, 3, 5, 12, 18, 28}
+
+    def _extract_gst_from_name(name):
+        """
+        Try several patterns to extract GST rate from an item name.
+        Tesseract commonly misreads '%' as '6', '%6', or nothing.
+        Returns (rate_float, cleaned_name) or (None, name).
+        """
+        # Pattern 1: clean "5%" or "12%" with actual percent sign
+        m = re.search(r'\b(\d{1,2})\s*%', name)
+        if m:
+            rate = float(m.group(1))
+            if rate in VALID_GST_RATES:
+                clean = re.sub(r'\s*[@]?\s*\d{1,2}\s*%\s*(?:Tax\s*(?:Item)?|GST\s*(?:Item)?|Item)?',
+                               '', name, flags=re.IGNORECASE).strip().title()
+                return rate, clean or name
+
+        # Pattern 2: Tesseract reads "3%" as "396" or "5%" as "596" — digit followed by 6 before "Tax"
+        m2 = re.search(r'\b(\d)\s*9?6\s+(?:Tax|Gst)\s*(?:Item)?', name, re.IGNORECASE)
+        if m2:
+            rate = float(m2.group(1)) * 10 if float(m2.group(1)) > 5 else float(m2.group(1))
+            # try exact: single digit before "6 Tax" → that digit is the rate
+            rate = float(m2.group(1))
+            if rate in VALID_GST_RATES:
+                clean = re.sub(r'\s*\d\s*9?6\s+(?:Tax|Gst)\s*(?:Item)?', '', name, flags=re.IGNORECASE).strip().title()
+                return rate, clean or name
+
+        # Pattern 3: "5 Tax Item" or "12 Tax Item" — number directly before Tax keyword
+        m3 = re.search(r'\b(\d{1,2})\s+(?:Tax|Gst)\s*(?:Item)?\b', name, re.IGNORECASE)
+        if m3:
+            rate = float(m3.group(1))
+            if rate in VALID_GST_RATES:
+                clean = re.sub(r'\s*\d{1,2}\s+(?:Tax|Gst)\s*(?:Item)?', '', name, flags=re.IGNORECASE).strip().title()
+                return rate, clean or name
+
+        return None, name
+
     enriched = []
     for item in items:
-        hsn, gst_rate = _get_hsn_and_gst(item.get("name", ""))
+        raw_name = item.get("name", "")
+
+        rate, clean_name = _extract_gst_from_name(raw_name)
+        if rate is not None:
+            gst_rate = rate
+            if len(clean_name) < 3:
+                clean_name = raw_name
+            hsn, _ = _get_hsn_and_gst(clean_name)
+        else:
+            clean_name = raw_name
+            hsn, gst_rate = _get_hsn_and_gst(raw_name)
+
         qty = item.get("quantity", 1)
         price = item.get("price", 0)
         taxable = round(qty * price, 2)
         gst_amt = round(taxable * gst_rate / 100, 2)
         enriched.append({
             **item,
+            "name": clean_name,
             "hsn_code": hsn,
             "gst_rate": gst_rate,
             "taxable_amount": taxable,

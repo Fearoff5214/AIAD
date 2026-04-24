@@ -45,9 +45,9 @@
           <div class="far-field">
             <label class="far-label">Industry Type</label>
             <select class="far-input" name="industry_type" required>
-              <option value="Manufacturing">Manufacturing</option>
-              <option value="Wholesale">Wholesale / Distribution</option>
-              <option value="Other">Retail / Other</option>
+              <option value="" disabled selected>Select industry type…</option>
+              <option value="Manufacturing">🏭 Manufacturing</option>
+              <option value="Wholesale">🛒 Wholesale / Distribution</option>
             </select>
           </div>
           <div class="far-field">
@@ -125,8 +125,17 @@
     result.className="far-result";result.textContent="";
     const data=Object.fromEntries(new FormData(form));
     try{
-      const resp=await fetch("/api/method/india_compliance.gst_india.api.portal_management.register_portal_user",{
-        method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)
+    const csrfToken = (typeof frappe !== 'undefined' && frappe.csrf_token)
+        ? frappe.csrf_token
+        : (document.cookie.match(/csrf_token=([^;]+)/) || [])[1] || 'no-token';
+      const resp = await fetch("/api/method/india_compliance.gst_india.api.portal_management.register_portal_user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "X-Frappe-CSRF-Token": csrfToken,
+          "X-Requested-With": "XMLHttpRequest"
+        },
+        body: new URLSearchParams(data).toString()
       });
       const payload=await resp.json();
       if(!resp.ok||payload.exc_type){

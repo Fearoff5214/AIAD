@@ -167,9 +167,13 @@ h1{font-size:1.8rem;font-weight:700;color:var(--teal-dark);margin-bottom:.25rem}
 const API = (method) => `/api/method/india_compliance.gst_india.api.${method}`;
 
 async function callAPI(method, body) {
+  let csrfToken = "{{ frappe.session.csrf_token }}";
+  if (csrfToken.includes("frappe.session")) {
+    csrfToken = window.csrf_token || (typeof frappe !== 'undefined' ? frappe.csrf_token : '');
+  }
   const r = await fetch(API(method), {
     method: 'POST',
-    headers: {'Content-Type': 'application/json', 'X-Frappe-CSRF-Token': frappe?.csrf_token || ''},
+    headers: {'Content-Type': 'application/json', 'X-Frappe-CSRF-Token': csrfToken, 'X-Requested-With': 'XMLHttpRequest'},
     body: JSON.stringify(body)
   });
   return r.json();

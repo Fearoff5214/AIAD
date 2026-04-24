@@ -165,12 +165,29 @@
     addBubble(question,"user");
     const thinking=addBubble("Thinking…","assistant");
     try{
+      let csrfToken = "{{ frappe.session.csrf_token }}";
+      if (csrfToken.includes("frappe.session")) {
+        csrfToken = window.csrf_token || (typeof frappe !== 'undefined' ? frappe.csrf_token : '');
+      }
       const r=await fetch("/api/method/india_compliance.gst_india.api.gst_copilot.gst_copilot_chat",{
-        method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({question})
+        method:"POST",
+        headers:{
+          "Content-Type":"application/x-www-form-urlencoded",
+          "X-Frappe-CSRF-Token":csrfToken,
+          "X-Requested-With":"XMLHttpRequest"
+        },
+        body: new URLSearchParams({question}).toString()
       });
       const d=await r.json();
-      thinking.textContent=(d.message?.answer)||"I don't have enough GST context to answer safely.";
-    }catch(e){thinking.textContent="Error: "+e.message}
+      if (d.message && d.message.answer) {
+        thinking.textContent = d.message.answer;
+      } else if (d.exc_type || d.exc) {
+        thinking.textContent = "Server Error: " + (d.exc_type || "Unknown");
+        console.error("GST Copilot Error Payload:", d);
+      } else {
+        thinking.textContent = "I don't have enough GST context to answer safely.";
+      }
+    }catch(e){thinking.textContent="Error: "+e.message; console.error(e);}
   }
 
   form.addEventListener("submit",async e=>{e.preventDefault();const q=inp.value.trim();if(!q)return;inp.value="";await ask(q)});
