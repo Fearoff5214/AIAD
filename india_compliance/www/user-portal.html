@@ -1,3 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fearoff AIAD – User Portal</title>
+  <meta name="description" content="Your personalized dashboard for GST compliance and ERP tools." />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #111827;
+      --muted: #4b5563;
+      --line: #e5e7eb;
+      --soft: #f9fafb;
+      --panel: #ffffff;
+      --accent: #0f766e;
+      --accent-soft: #d9f3f0;
+      --gradient-bg: linear-gradient(165deg, #f7fafc 0%, #eef3f9 55%, #f9fbfd 100%);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: var(--gradient-bg); color: var(--ink); }
+    .dashboard-page {
+      max-width: 1300px;
+      margin: 2rem auto;
+      padding: 1rem;
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 2rem;
+    }
+    .left-rail {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 1.5rem;
+      position: sticky;
+      top: 2rem;
+    }
+    .left-rail h2 {
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+    .sector-nav a {
+      display: block;
+      text-decoration: none;
+      color: var(--ink);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 0.65rem 0.75rem;
+      background: var(--soft);
+      font-weight: 600;
+      transition: all 0.2s ease;
+      margin-bottom: 0.5rem;
+    }
+    .sector-nav a:hover {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+    .rail-card {
+      margin-top: 1.5rem;
+      border-top: 1px solid var(--line);
+      padding-top: 1rem;
+    }
+    .rail-card h3 { margin-bottom: 0.5rem; }
+    .rail-card a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+      transition: opacity 0.2s;
+    }
+    .rail-card a:hover { opacity: 0.85; }
+
+    /* GST Demo Styles */
+    .gd-tabs{display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap}
+    .gd-tab{padding:.5rem 1.1rem;border-radius:8px;border:1px solid #d1d5db;background:#f9fafb;cursor:pointer;font-weight:600;font-size:.88rem;transition:all .2s}
+    .gd-tab.ok{border-color:#16a34a;color:#15803d;background:#f0fdf4}
+    .gd-tab.err{border-color:#dc2626;color:#dc2626;background:#fef2f2}
+    .gd-tab.try{border-color:#0f766e;color:#0f766e;background:#f0fdfa}
+    .gd-tab.active{box-shadow:0 2px 8px rgba(0,0,0,.15)}
+    .gd-panel{display:none}.gd-panel.show{display:block}
+    .inv-box{border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.06)}
+    .inv-head{background:linear-gradient(120deg,#1e3a5f,#0f4c75);color:#fff;padding:1rem 1.4rem;display:flex;justify-content:space-between;align-items:flex-start}
+    .inv-head h2{margin:0;font-size:1.1rem;color:#fff}
+    .inv-head p{margin:.2rem 0 0;opacity:.8;font-size:.82rem}
+    .badge-ok{background:#22c55e;color:#fff;border-radius:6px;padding:.2rem .7rem;font-size:.75rem;font-weight:700}
+    .badge-err{background:#ef4444;color:#fff;border-radius:6px;padding:.2rem .7rem;font-size:.75rem;font-weight:700}
+    .inv-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;padding:1rem 1.4rem;background:#f8fafc;border-bottom:1px solid #e5e7eb;font-size:.85rem}
+    .inv-meta strong{display:block;color:#6b7280;font-size:.75rem;margin-bottom:.2rem}
+    table.inv-tbl{width:100%;border-collapse:collapse;font-size:.86rem}
+    table.inv-tbl thead{background:#f1f5f9}
+    table.inv-tbl th{padding:.6rem .9rem;text-align:left;color:#374151;font-weight:600;border-bottom:2px solid #e5e7eb}
+    table.inv-tbl td{padding:.65rem .9rem;border-bottom:1px solid #f3f4f6;vertical-align:top}
+    .inv-total{display:flex;justify-content:flex-end;padding:.9rem 1.4rem;background:#f8fafc;border-top:1px solid #e5e7eb}
+    .tot-grid{display:grid;grid-template-columns:200px 120px;gap:.3rem .5rem;font-size:.88rem;text-align:right}
+    .tot-grand{font-weight:700;font-size:1rem;color:#0f766e;border-top:1px solid #d1d5db;padding-top:.4rem;margin-top:.2rem}
+    .row-err{background:#fff5f5!important}
+    .cell-err{color:#dc2626;font-weight:700;position:relative}
+    .err-badge{display:inline-block;background:#fef2f2;border:1px solid #fecaca;color:#dc2626;border-radius:4px;padding:.15rem .5rem;font-size:.72rem;font-weight:700;margin-left:.4rem;cursor:help}
+    .err-note{background:#fef2f2;border-left:4px solid #ef4444;padding:.7rem 1rem;font-size:.83rem;color:#991b1b;margin:.3rem 0; text-align: left;}
+    .ok-row{background:#f0fdf4!important}
+    .val-form{display:grid;gap:.8rem}
+    .val-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:.6rem;align-items:center}
+    .val-row input,select{border:1px solid #d1d5db;border-radius:7px;padding:.5rem .7rem;font-size:.85rem;width:100%}
+    .val-hdr{font-weight:700;font-size:.78rem;color:#6b7280;text-transform:uppercase;padding:.3rem .7rem}
+    .val-btn{padding:.65rem 1.4rem;border:none;border-radius:8px;background:linear-gradient(135deg,#0d9488,#0369a1);color:#fff;font-weight:700;cursor:pointer;font-size:.9rem;margin-top:.5rem}
+    .val-result{margin-top:1rem}
+    .err-item{background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:.6rem .9rem;margin:.4rem 0;font-size:.85rem;color:#991b1b}
+    .ok-item{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:.6rem .9rem;margin:.4rem 0;font-size:.85rem;color:#15803d}
+    .section-tip{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:.7rem 1rem;font-size:.83rem;color:#92400e;margin-bottom:.9rem}
+    .main-zone { display: grid; gap: 1.5rem; }
+    .hero-card, .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 1.2rem; }
+    .hero-card { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+    .eyebrow { color: var(--muted); font-size: 0.85rem; text-transform: uppercase; font-weight: 700; margin-bottom: 0.3rem; }
+    #company-title { font-size: 2rem; margin: 0.4rem 0; }
+    #welcome-line { font-size: 1rem; color: #374151; }
+    .industry-pill { border: 1px solid #a7d6d0; background: var(--accent-soft); color: #0f4a45; font-weight: 700; padding: 0.4rem 0.7rem; border-radius: 999px; }
+    .panel-head { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid #e4e8ef; padding-bottom: 0.7rem; margin-bottom: 0.8rem; }
+    .panel-head h2 { font-weight: 600; }
+    .feature-grid, .action-grid { display: grid; gap: 0.8rem; }
+    .feature-grid { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+    .action-grid { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+    .feature-card, .action-card { border: 1px solid #d8dfeb; border-radius: 12px; background: #fcfdff; padding: 0.8rem; }
+    .feature-card h3, .action-card h3 { margin: 0 0 0.4rem; font-size: 1rem; }
+    .feature-card p, .action-card p { margin: 0 0 0.4rem; color: #445065; font-size: 0.9rem; line-height: 1.45; }
+    .action-card a { display: inline-block; margin-top: 0.6rem; text-decoration: none; border-radius: 8px; border: 1px solid #c8d7ee; background: #edf4ff; color: #193a66; padding: 0.45rem 0.65rem; font-weight: 600; font-size: 0.85rem; transition: background 0.2s; }
+    .action-card a:hover { background: #d0e3ff; }
+    .copilot-inline .chat-box { min-height: 250px; max-height: 420px; overflow-y: auto; padding: 0.7rem; background: #f8fbff; border: 1px solid #d9e3f2; border-radius: 10px; }
+    .bubble { margin: 0.5rem 0; padding: 0.58rem 0.7rem; border-radius: 8px; max-width: 85%; white-space: pre-wrap; }
+    .assistant { background: #eaf1ff; border: 1px solid #d5e0fb; }
+    .user { background: #e7f7ef; border: 1px solid #c6ebd8; margin-left: auto; }
+    .input-row { margin-top: 0.7rem; display: grid; grid-template-columns: 1fr auto auto; gap: 0.5rem; }
+    .input-row input, .input-row button { border-radius: 8px; border: 1px solid #d3dceb; padding: 0.62rem; }
+    .input-row button { cursor: pointer; }
+    @media (max-width: 980px) {
+      .dashboard-page { grid-template-columns: 1fr; }
+      .left-rail { position: static; }
+    }
+    @media (max-width: 620px) {
+      #company-title { font-size: 1.5rem; }
+      .hero-card { flex-direction: column; align-items: flex-start; }
+      .input-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
 <div class="dashboard-page">
   <aside class="left-rail">
     <h2>Portal Menu</h2>
@@ -13,9 +158,9 @@
   <main class="main-zone">
     <section class="hero-card">
       <div>
-        <p class="eyebrow">Sector-Tailored Portal</p>
-        <h1 id="company-title">Loading your dashboard...</h1>
-        <p id="welcome-line">Fetching industry-specific tools and options.</p>
+        <p class="eyebrow">Sector‑Tailored Portal</p>
+        <h1 id="company-title">Loading your dashboard…</h1>
+        <p id="welcome-line">Fetching industry‑specific tools and options.</p>
       </div>
       <span id="industry-pill" class="industry-pill">-</span>
     </section>
@@ -29,384 +174,148 @@
     </section>
 
     <section class="panel">
-      <div class="panel-head">
-        <h2>Recommended Actions</h2>
-        <p>Based on your selected business sector</p>
-      </div>
+      <div class="panel-head"><h2>Recommended Actions</h2><p>Based on your selected business sector</p></div>
       <div id="action-grid" class="action-grid"></div>
     </section>
 
-    <section class="panel copilot-inline">
+    <section class="panel">
       <div class="panel-head">
-        <h2>GST Copilot Assistant</h2>
-        <p>Ask compliance questions directly from your portal.</p>
+        <h2>📄 GST Invoice Compliance Demo</h2>
+        <p>See correct vs incorrect billing and validate compliance in real-time.</p>
       </div>
-      <div id="suggested" class="suggested-row"></div>
-      <div id="chat" class="chat-box"></div>
-      <form id="chat-form" class="input-row">
-        <input id="question" type="text" placeholder="Ask about India GST compliance..." autocomplete="off" required>
-        <button type="button" id="voice-btn">Voice</button>
-        <button type="submit">Send</button>
-      </form>
+      
+      <div class="gd-tabs">
+        <button class="gd-tab ok active" onclick="showTab('ok',this)">✅ Correct Invoice</button>
+        <button class="gd-tab err" onclick="showTab('err',this)">❌ Invoice with Errors</button>
+        <button class="gd-tab try" onclick="showTab('try',this)">🧮 Validate Compliance</button>
+      </div>
+
+      <!-- TAB 1: CORRECT INVOICE -->
+      <div class="gd-panel show" id="gd-ok">
+        <div class="inv-box">
+          <div class="inv-head">
+            <div><h2>Tax Invoice</h2><p>Acme Manufacturing Pvt. Ltd. → Tech Solutions India Ltd.</p></div>
+            <span class="badge-ok">✓ GST COMPLIANT</span>
+          </div>
+          <div class="inv-meta">
+            <div><strong>Invoice No.</strong>SINV-2026-0042</div>
+            <div><strong>Date</strong>24-Apr-2026</div>
+            <div><strong>GSTIN (Supplier)</strong>27AABCA1234C1Z5</div>
+            <div><strong>Place of Supply</strong>Maharashtra (27)</div>
+            <div><strong>Payment Due</strong>24-May-2026</div>
+            <div><strong>GSTIN (Buyer)</strong>29AADCT5432B1ZP</div>
+          </div>
+          <table class="inv-tbl">
+            <thead><tr><th>#</th><th>Item</th><th>HSN</th><th>Qty</th><th>Rate (₹)</th><th>Taxable (₹)</th><th>GST%</th><th>Tax (₹)</th><th>Total (₹)</th></tr></thead>
+            <tbody>
+              <tr class="ok-row"><td>1</td><td>Industrial Motor (3-Phase)</td><td>8501</td><td>5 Nos</td><td>12,000</td><td>60,000</td><td>18%</td><td>10,800</td><td>70,800</td></tr>
+              <tr class="ok-row"><td>2</td><td>Steel Hex Bolts M12</td><td>7318</td><td>500 Nos</td><td>12</td><td>6,000</td><td>18%</td><td>1,080</td><td>7,080</td></tr>
+              <tr class="ok-row"><td>3</td><td>Corrugated Packing Box</td><td>4819</td><td>10 Nos</td><td>200</td><td>2,000</td><td>12%</td><td>240</td><td>2,240</td></tr>
+            </tbody>
+          </table>
+          <div class="inv-total">
+            <div class="tot-grid">
+              <span>Taxable Value</span><span>₹ 68,000</span>
+              <span>Total GST (CGST+SGST)</span><span>₹ 12,120</span>
+              <div class="tot-grand">Grand Total</div><div class="tot-grand">₹ 80,120</div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:.8rem;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:.8rem 1rem;font-size:.84rem;color:#15803d">
+          ✅ <strong>Compliance Check:</strong> HSN codes correctly mapped to rates (18% for machinery/parts, 12% for packaging). Tax calculated correctly on taxable value.
+        </div>
+      </div>
+
+      <!-- TAB 2: ERROR INVOICE -->
+      <div class="gd-panel" id="gd-err">
+        <div class="inv-box">
+          <div class="inv-head" style="background:linear-gradient(120deg,#7f1d1d,#991b1b)">
+            <div><h2>Tax Invoice</h2><p>Acme Manufacturing Pvt. Ltd. → Tech Solutions India Ltd.</p></div>
+            <span class="badge-err">⚠ 3 GST ERRORS</span>
+          </div>
+          <div class="inv-meta">
+            <div><strong>Invoice No.</strong>SINV-2026-0041</div>
+            <div><strong>Date</strong>23-Apr-2026</div>
+            <div><strong>GSTIN (Supplier)</strong>27AABCA1234C1Z5</div>
+            <div><strong>Place of Supply</strong>Maharashtra (27)</div>
+            <div><strong>Payment Due</strong>23-May-2026</div>
+            <div><strong>GSTIN (Buyer)</strong>29AADCT5432B1ZP</div>
+          </div>
+          <table class="inv-tbl">
+            <thead><tr><th>#</th><th>Item</th><th>HSN</th><th>Qty</th><th>Rate (₹)</th><th>Taxable (₹)</th><th>GST%</th><th>Tax (₹)</th><th>Total (₹)</th></tr></thead>
+            <tbody>
+              <tr class="row-err">
+                <td>1</td><td>Industrial Motor</td><td>8501</td><td>5</td><td>12,000</td><td>60,000</td>
+                <td class="cell-err">12% <span class="err-badge" title="Error">ERR</span></td>
+                <td class="cell-err">7,200 <span class="err-badge">ERR</span></td>
+                <td>67,200</td>
+              </tr>
+              <tr class="row-err">
+                <td>2</td><td>Fresh Vegetables</td><td class="cell-err">0701 <span class="err-badge">ERR</span></td><td>100 kg</td><td>50</td><td>5,000</td>
+                <td class="cell-err">5% <span class="err-badge">ERR</span></td>
+                <td class="cell-err">250 <span class="err-badge">ERR</span></td>
+                <td>5,250</td>
+              </tr>
+              <tr class="row-err">
+                <td>3</td><td>Steel Hex Bolts</td><td>7318</td><td>500</td><td>12</td><td>6,000</td>
+                <td>18%</td>
+                <td class="cell-err">1,500 <span class="err-badge">ERR</span></td>
+                <td>7,500</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="inv-total">
+            <div class="tot-grid">
+              <span>Taxable Value</span><span>₹ 71,000</span>
+              <span>Total GST (Incorrect)</span><span class="cell-err">₹ 8,950</span>
+              <div class="tot-grand">Grand Total</div><div class="tot-grand" style="color:#dc2626">₹ 79,950</div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:.9rem;display:grid;gap:.6rem">
+          <div class="err-note">❌ <strong>Error 1:</strong> Wrong rate for Motor. HSN 8501 is 18%, not 12%.</div>
+          <div class="err-note">❌ <strong>Error 2:</strong> Fresh Vegetables are 0% (Exempt). Tax charged incorrectly.</div>
+          <div class="err-note">❌ <strong>Error 3:</strong> Value mismatch. 18% of 6,000 is 1,080, but 1,500 was charged.</div>
+        </div>
+      </div>
+
+      <!-- TAB 3: VALIDATOR -->
+      <div class="gd-panel" id="gd-try">
+        <div class="section-tip">⚙️ Enter line items to check tax accuracy and HSN compliance.</div>
+        <div class="val-form" id="val-lines">
+          <div class="val-row val-hdr"><div>Item Description</div><div>HSN</div><div>Taxable (₹)</div><div>GST%</div><div>Tax (₹)</div></div>
+          <div class="val-row"><input placeholder="Item" class="item-name"/><input placeholder="8501" class="item-hsn"/><input type="number" placeholder="60000" class="item-base"/><select class="item-rate"><option value="0">0%</option><option value="5">5%</option><option value="12">12%</option><option value="18" selected>18%</option></select><input type="number" placeholder="10800" class="item-tax"/></div>
+        </div>
+        <div style="display:flex;gap:.5rem;margin-top:.8rem">
+          <button class="val-btn" onclick="addRow()">+ Add Line</button>
+          <button class="val-btn" style="background:linear-gradient(135deg,#0f766e,#065f46)" onclick="validateInvoice()">🔍 Run Compliance Check</button>
+        </div>
+        <div id="val-result" class="val-result"></div>
+      </div>
     </section>
   </main>
 </div>
 
-<style>
-  :root {
-    --ink: #111827;
-    --muted: #4b5563;
-    --line: #d4d9e3;
-    --soft: #f2f5fa;
-    --panel: #ffffff;
-    --accent: #0f766e;
-    --accent-soft: #d9f3f0;
-  }
-
-  .dashboard-page {
-    max-width: 1300px;
-    margin: 0 auto;
-    padding: 1rem;
-    display: grid;
-    grid-template-columns: 260px 1fr;
-    gap: 1rem;
-    background: linear-gradient(165deg, #f7fafc 0%, #eef3f9 55%, #f9fbfd 100%);
-  }
-
-  .left-rail {
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    padding: 1rem;
-    height: fit-content;
-    position: sticky;
-    top: 1rem;
-  }
-
-  .left-rail h2 {
-    margin-top: 0;
-    margin-bottom: 0.8rem;
-    font-size: 1.15rem;
-  }
-
-  .sector-nav {
-    display: grid;
-    gap: 0.55rem;
-  }
-
-  .sector-nav a {
-    text-decoration: none;
-    color: #1f2937;
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 0.65rem 0.75rem;
-    background: #fbfcfe;
-    font-weight: 600;
-  }
-
-  .sector-nav a:hover {
-    border-color: #a6bacf;
-    background: #f5f9ff;
-  }
-
-  .rail-card {
-    margin-top: 1rem;
-    border-top: 1px solid var(--line);
-    padding-top: 0.9rem;
-    display: grid;
-    gap: 0.45rem;
-  }
-
-  .rail-card h3 {
-    margin: 0 0 0.35rem;
-    font-size: 1rem;
-  }
-
-  .rail-card a {
-    color: var(--accent);
-    text-decoration: none;
-    font-weight: 600;
-  }
-
-  .main-zone {
-    display: grid;
-    gap: 1rem;
-  }
-
-  .hero-card,
-  .panel {
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 14px;
-  }
-
-  .hero-card {
-    padding: 1.1rem 1.2rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 1rem;
-  }
-
-  .eyebrow {
-    margin: 0;
-    color: var(--muted);
-    letter-spacing: 0.02em;
-    font-size: 0.86rem;
-    text-transform: uppercase;
-    font-weight: 700;
-  }
-
-  #company-title {
-    margin: 0.35rem 0;
-    font-size: 2rem;
-    color: var(--ink);
-  }
-
-  #welcome-line {
-    margin: 0;
-    color: #374151;
-    font-size: 1rem;
-  }
-
-  .industry-pill {
-    border: 1px solid #a7d6d0;
-    background: var(--accent-soft);
-    color: #0f4a45;
-    font-weight: 700;
-    padding: 0.42rem 0.72rem;
-    border-radius: 999px;
-    white-space: nowrap;
-  }
-
-  .panel {
-    padding: 1rem 1.1rem;
-  }
-
-  .panel-head {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    align-items: baseline;
-    border-bottom: 1px solid #e4e8ef;
-    padding-bottom: 0.7rem;
-    margin-bottom: 0.8rem;
-  }
-
-  .panel-head h2,
-  .panel-head p {
-    margin: 0;
-  }
-
-  .panel-head p {
-    color: var(--muted);
-    font-size: 0.92rem;
-  }
-
-  .feature-grid,
-  .action-grid {
-    display: grid;
-    gap: 0.8rem;
-  }
-
-  .feature-grid {
-    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  }
-
-  .action-grid {
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  }
-
-  .feature-card,
-  .action-card {
-    border: 1px solid #d8dfeb;
-    border-radius: 12px;
-    background: #fcfdff;
-    padding: 0.8rem;
-  }
-
-  .feature-card h3,
-  .action-card h3 {
-    margin: 0;
-    font-size: 1rem;
-  }
-
-  .feature-card p,
-  .action-card p {
-    margin: 0.45rem 0 0;
-    color: #445065;
-    font-size: 0.9rem;
-    line-height: 1.45;
-  }
-
-  .action-card a {
-    display: inline-block;
-    margin-top: 0.6rem;
-    text-decoration: none;
-    border-radius: 8px;
-    border: 1px solid #c8d7ee;
-    background: #edf4ff;
-    color: #193a66;
-    padding: 0.45rem 0.65rem;
-    font-weight: 600;
-    font-size: 0.85rem;
-  }
-
-  .copilot-inline {
-    overflow: hidden;
-  }
-
-  .suggested-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-bottom: 0.8rem;
-  }
-
-  .suggested-btn {
-    border: 1px solid #cfe0f8;
-    background: #eef5ff;
-    color: #153d76;
-    border-radius: 999px;
-    padding: 0.4rem 0.7rem;
-    cursor: pointer;
-    font-size: 0.85rem;
-  }
-
-  .chat-box {
-    min-height: 250px;
-    max-height: 420px;
-    overflow-y: auto;
-    padding: 0.7rem;
-    background: #f8fbff;
-    border: 1px solid #d9e3f2;
-    border-radius: 10px;
-  }
-
-  .bubble {
-    margin: 0.5rem 0;
-    padding: 0.58rem 0.7rem;
-    border-radius: 8px;
-    max-width: 85%;
-    white-space: pre-wrap;
-  }
-
-  .assistant {
-    background: #eaf1ff;
-    border: 1px solid #d5e0fb;
-  }
-
-  .user {
-    background: #e7f7ef;
-    border: 1px solid #c6ebd8;
-    margin-left: auto;
-  }
-
-  .input-row {
-    margin-top: 0.7rem;
-    display: grid;
-    grid-template-columns: 1fr auto auto;
-    gap: 0.5rem;
-  }
-
-  .input-row input,
-  .input-row button {
-    border-radius: 8px;
-    border: 1px solid #d3dceb;
-    padding: 0.62rem;
-  }
-
-  .input-row button {
-    cursor: pointer;
-  }
-
-  @media (max-width: 980px) {
-    .dashboard-page {
-      grid-template-columns: 1fr;
-    }
-
-    .left-rail {
-      position: static;
-    }
-  }
-
-  @media (max-width: 620px) {
-    #company-title {
-      font-size: 1.5rem;
-    }
-
-    .hero-card {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-
-    .input-row {
-      grid-template-columns: 1fr;
-    }
-  }
-</style>
-
 <script>
-  const chatBox = document.getElementById("chat");
-  const form = document.getElementById("chat-form");
-  const questionInput = document.getElementById("question");
-  const suggestedEl = document.getElementById("suggested");
-  const voiceBtn = document.getElementById("voice-btn");
   const navEl = document.getElementById("sector-nav");
   const featureGrid = document.getElementById("feature-grid");
   const actionGrid = document.getElementById("action-grid");
 
   const sectorActions = {
     Manufacturing: [
-      {
-        title: "Create Production Order",
-        description: "Start planned production jobs and monitor work orders.",
-        url: "/app/production-order"
-      },
-      {
-        title: "Manage BOM",
-        description: "Update bill of materials and verify component usage.",
-        url: "/app/bom"
-      },
-      {
-        title: "Batch Inventory",
-        description: "Track stock movement by batch and warehouse.",
-        url: "/app/batch"
-      }
+      { title: "Create Production Order", description: "Start planned production jobs and monitor work orders.", url: "/app/production-order" },
+      { title: "Manage BOM", description: "Update bill of materials and verify component usage.", url: "/app/bom" },
+      { title: "Batch Inventory", description: "Track stock movement by batch and warehouse.", url: "/app/batch" }
     ],
     Wholesale: [
-      {
-        title: "Create Sales Order",
-        description: "Capture distributor orders and process at scale.",
-        url: "/app/sales-order"
-      },
-      {
-        title: "Set Pricing Rules",
-        description: "Define quantity-based pricing for customers.",
-        url: "/app/pricing-rule"
-      },
-      {
-        title: "Generate E-Way Bills",
-        description: "Create and track transport-ready e-way bills.",
-        url: "/app/eway-bill"
-      }
+      { title: "Create Sales Order", description: "Capture distributor orders and process at scale.", url: "/app/sales-order" },
+      { title: "Set Pricing Rules", description: "Define quantity‑based pricing for customers.", url: "/app/pricing-rule" },
+      { title: "Generate E‑Way Bills", description: "Create and track transport‑ready e‑way bills.", url: "/app/eway-bill" }
     ],
     Other: [
-      {
-        title: "Add Customer",
-        description: "Maintain your customer master data.",
-        url: "/app/customer"
-      },
-      {
-        title: "Create Sales Invoice",
-        description: "Generate GST-compliant invoices quickly.",
-        url: "/app/sales-invoice"
-      },
-      {
-        title: "Review GST Utilities",
-        description: "Use GST reports and filing support tools.",
-        url: "/app/query-report/GSTR-1"
-      }
+      { title: "Add Customer", description: "Maintain your customer master data.", url: "/app/customer" },
+      { title: "Create Sales Invoice", description: "Generate GST‑compliant invoices quickly.", url: "/app/sales-invoice" },
+      { title: "Review GST Utilities", description: "Use GST reports and filing support tools.", url: "/app/query-report/GSTR-1" }
     ]
   };
 
@@ -414,189 +323,134 @@
     "Production Order Dashboard": "Track production throughput, open jobs, and output variances.",
     "BOM and Material Planning": "Plan material requirements before work order release.",
     "Batch and Inventory Tracking": "Monitor inventory by batch and warehouse movement.",
-    "GST and E-Invoice Automation": "Automate invoice generation with GST-compliant data.",
-    "Bulk Order Management": "Handle high-volume customer orders with fewer clicks.",
-    "Distributor Pricing Rules": "Apply customer and quantity-specific pricing strategies.",
-    "High-volume Invoicing": "Generate and post invoices efficiently at scale.",
-    "GST and E-Way Bill Automation": "Speed up bill generation and transport compliance.",
+    "GST and E‑Invoice Automation": "Automate invoice generation with GST‑compliant data.",
+    "Bulk Order Management": "Handle high‑volume customer orders with fewer clicks.",
+    "Distributor Pricing Rules": "Apply customer and quantity‑specific pricing strategies.",
+    "High‑volume Invoicing": "Generate and post invoices efficiently at scale.",
+    "GST and E‑Way Bill Automation": "Speed up bill generation and transport compliance.",
     "Customer Management": "Maintain customer records and contact details centrally.",
     "Sales and Purchase Tracking": "Track all commercial transactions in one place.",
-    "GST Returns Utilities": "Prepare and verify GST return-related data."
+    "GST Returns Utilities": "Prepare and verify GST return‑related data."
   };
-
-  function addBubble(text, role) {
-    const el = document.createElement("div");
-    el.className = `bubble ${role}`;
-    el.textContent = text;
-    chatBox.appendChild(el);
-    chatBox.scrollTop = chatBox.scrollHeight;
-  }
-
-  async function loadSuggestions() {
-    const res = await fetch("/api/method/india_compliance.gst_india.api.gst_copilot.gst_copilot_suggested_questions");
-    const data = await res.json();
-    const questions = (data.message && data.message.questions) || [];
-
-    suggestedEl.innerHTML = "";
-    questions.forEach((q) => {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "suggested-btn";
-      btn.textContent = q;
-      btn.onclick = () => {
-        questionInput.value = q;
-        form.requestSubmit();
-      };
-      suggestedEl.appendChild(btn);
-    });
-  }
-
-  async function askQuestion(question) {
-    addBubble(question, "user");
-    addBubble("Thinking...", "assistant");
-    const thinkingBubble = chatBox.lastElementChild;
-
-    const res = await fetch("/api/method/india_compliance.gst_india.api.gst_copilot.gst_copilot_chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question })
-    });
-
-    const data = await res.json();
-    const answer = (data.message && data.message.answer) || "No response received.";
-    thinkingBubble.textContent = answer;
-
-    await fetch("/api/method/india_compliance.gst_india.api.portal_management.track_usage", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        event_type: "copilot_chat",
-        route: "/user-portal",
-        metadata_json: JSON.stringify({ source: "user_portal_inline" })
-      })
-    });
-  }
 
   function renderSectorNav(industry) {
     const links = [
       { label: "Dashboard Home", url: "/user-portal" },
       { label: "GST Copilot", url: "/gst-copilot" }
     ];
-
-    (sectorActions[industry] || sectorActions.Other).forEach((item) => {
-      links.push({ label: item.title, url: item.url });
-    });
-
+    (sectorActions[industry] || sectorActions.Other).forEach(item => links.push({ label: item.title, url: item.url }));
     navEl.innerHTML = "";
-    links.forEach((item) => {
+    links.forEach(l => {
       const a = document.createElement("a");
-      a.href = item.url;
-      a.textContent = item.label;
+      a.href = l.url;
+      a.textContent = l.label;
       navEl.appendChild(a);
     });
   }
 
   function renderFeatureCards(features) {
     featureGrid.innerHTML = "";
-    features.forEach((feature) => {
+    features.forEach(f => {
       const card = document.createElement("article");
       card.className = "feature-card";
-      card.innerHTML = `<h3>${feature}</h3><p>${featureHints[feature] || "Feature enabled for your current subscription and industry profile."}</p>`;
+      card.innerHTML = `<h3>${f}</h3><p>${featureHints[f] || "Feature enabled for your subscription."}</p>`;
       featureGrid.appendChild(card);
     });
-
     if (!features.length) {
       const empty = document.createElement("article");
       empty.className = "feature-card";
-      empty.innerHTML = "<h3>No features configured</h3><p>Contact your administrator to enable sector-specific modules.</p>";
+      empty.innerHTML = "<h3>No features configured</h3><p>Contact your administrator.</p>";
       featureGrid.appendChild(empty);
     }
-
     document.getElementById("feature-count").textContent = `${features.length} feature${features.length === 1 ? "" : "s"} enabled`;
   }
 
   function renderActionCards(industry) {
     const actions = sectorActions[industry] || sectorActions.Other;
     actionGrid.innerHTML = "";
-    actions.forEach((action) => {
+    actions.forEach(a => {
       const card = document.createElement("article");
       card.className = "action-card";
-      card.innerHTML = `<h3>${action.title}</h3><p>${action.description}</p><a href="${action.url}">Open</a>`;
+      card.innerHTML = `<h3>${a.title}</h3><p>${a.description}</p><a href="${a.url}">Open</a>`;
       actionGrid.appendChild(card);
     });
   }
 
   async function loadFeatures() {
-    const response = await fetch(
-      "/api/method/india_compliance.gst_india.api.portal_management.get_my_portal_features"
-    );
-    const payload = await response.json();
-    const data = payload.message || {};
-
-    if (!data.tenant) {
-      document.getElementById("company-title").textContent = "No active tenant found";
-      document.getElementById("welcome-line").textContent = "Please ask your administrator to activate your portal tenant.";
-      document.getElementById("industry-pill").textContent = "Unassigned";
-      renderFeatureCards([]);
-      renderActionCards("Other");
-      renderSectorNav("Other");
-      return;
+    try {
+      const resp = await fetch("/api/method/india_compliance.gst_india.api.portal_management.get_my_portal_features");
+      const payload = await resp.json();
+      const data = payload.message || {};
+      if (!data.tenant) {
+        document.getElementById("company-title").textContent = "No active tenant found";
+        document.getElementById("welcome-line").textContent = "Please ask your administrator to activate your portal tenant.";
+        document.getElementById("industry-pill").textContent = "Unassigned";
+        renderFeatureCards([]);
+        renderActionCards("Other");
+        renderSectorNav("Other");
+        return;
+      }
+      const industry = data.industry_type || "Other";
+      document.getElementById("company-title").textContent = data.company_name || "My Company";
+      document.getElementById("industry-pill").textContent = industry;
+      document.getElementById("welcome-line").textContent = `Welcome ${data.tenant}. Your workspace is tuned for ${industry.toLowerCase()} operations.`;
+      renderFeatureCards(data.enabled_features || []);
+      renderActionCards(industry);
+      renderSectorNav(industry);
+      // Track portal view
+      fetch("/api/method/india_compliance.gst_india.api.portal_management.track_usage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ event_type: "portal_view", route: "/user-portal" })
+      });
+    } catch (err) {
+      document.getElementById("company-title").textContent = "Portal unavailable";
+      document.getElementById("welcome-line").textContent = `Unable to load portal: ${err.message}`;
     }
-
-    const industry = data.industry_type || "Other";
-    document.getElementById("company-title").textContent = data.company_name || "My Company";
-    document.getElementById("industry-pill").textContent = industry;
-    document.getElementById("welcome-line").textContent =
-      `Welcome ${data.tenant}. Your workspace is tuned for ${industry.toLowerCase()} operations.`;
-
-    renderFeatureCards(data.enabled_features || []);
-    renderActionCards(industry);
-    renderSectorNav(industry);
-
-    await fetch("/api/method/india_compliance.gst_india.api.portal_management.track_usage", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ event_type: "portal_view", route: "/user-portal" })
-    });
   }
 
-  form.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const question = questionInput.value.trim();
-    if (!question) return;
-    questionInput.value = "";
 
-    try {
-      await askQuestion(question);
-    } catch (error) {
-      addBubble(`Error: ${error.message}`, "assistant");
+  // GST Demo Functions
+  function showTab(id, btn) {
+    document.querySelectorAll('.gd-panel').forEach(p => p.classList.remove('show'));
+    document.querySelectorAll('.gd-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('gd-' + id).classList.add('show');
+    btn.classList.add('active');
+  }
+  function addRow() {
+    const c = document.getElementById('val-lines');
+    const r = document.createElement('div'); r.className = 'val-row';
+    r.innerHTML = '<input placeholder="Item" class="item-name"/><input placeholder="HSN" class="item-hsn"/><input type="number" placeholder="0" class="item-base"/><select class="item-rate"><option value="0">0%</option><option value="5">5%</option><option value="12">12%</option><option value="18" selected>18%</option></select><input type="number" placeholder="0" class="item-tax"/>';
+    c.appendChild(r);
+  }
+  function validateInvoice() {
+    const names = document.querySelectorAll('.item-name');
+    const bases = document.querySelectorAll('.item-base');
+    const rates = document.querySelectorAll('.item-rate');
+    const taxes = document.querySelectorAll('.item-tax');
+    let html = ''; let ok = true;
+    for (let i = 0; i < bases.length; i++) {
+      const name = names[i].value || 'Line ' + (i + 1);
+      const base = parseFloat(bases[i].value) || 0;
+      const rate = parseFloat(rates[i].value) || 0;
+      const tax = parseFloat(taxes[i].value) || 0;
+      if (!base && !tax) continue;
+      const expected = Math.round(base * rate) / 100;
+      const diff = Math.abs(tax - expected);
+      if (diff > 1) {
+        ok = false;
+        html += `<div class="err-item">❌ <strong>${name}</strong>: Should be ₹${expected.toFixed(0)}, but ₹${tax} found (Diff: ₹${diff.toFixed(0)}).</div>`;
+      } else {
+        html += `<div class="ok-item">✅ <strong>${name}</strong>: Correct tax calculation.</div>`;
+      }
     }
-  });
+    if (!html) html = '<div class="ok-item">Add data to validate.</div>';
+    else if (ok) html = '<div class="ok-item" style="font-weight:700">✅ Compliance Verified!</div>' + html;
+    else html = '<div class="err-item" style="font-weight:700">⚠️ Compliance Mismatches Found</div>' + html;
+    document.getElementById('val-result').innerHTML = html;
+  }
 
-  voiceBtn.addEventListener("click", () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      addBubble("Voice input is not supported in this browser.", "assistant");
-      return;
-    }
-
-    const recognition = new SpeechRecognition();
-    recognition.lang = "en-IN";
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-    recognition.onresult = (event) => {
-      questionInput.value = event.results[0][0].transcript;
-    };
-    recognition.onerror = () => {
-      addBubble("Voice input failed. Please type your question.", "assistant");
-    };
-    recognition.start();
-  });
-
-  addBubble("Hello. Ask me anything about India GST compliance.", "assistant");
-  loadSuggestions();
-  loadFeatures().catch((error) => {
-    document.getElementById("company-title").textContent = "Portal unavailable";
-    document.getElementById("welcome-line").textContent = `Unable to load portal: ${error.message}`;
-  });
+  loadFeatures();
 </script>
+</body>
+</html>

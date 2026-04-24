@@ -19,6 +19,17 @@ CORE_SERVICES = [
 ]
 
 
+def check_docker_daemon():
+    try:
+        subprocess.run(["docker", "info"], check=True, capture_output=True)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        print("\n" + "!" * 60)
+        print("ERROR: Docker Desktop is not running!")
+        print("Please start Docker Desktop and try again.")
+        print("!" * 60 + "\n")
+        sys.exit(1)
+
+
 def print_access_links(tenants, frontend_port):
     print("\nServer started successfully.")
     print("Website links:")
@@ -53,6 +64,9 @@ def wait_for_db_health(cwd, timeout_seconds=180):
             capture_output=True,
         )
         if "healthy" in (result.stdout or ""):
+            # Extra settle time so MariaDB fully initialises table definitions
+            print("Database healthy. Waiting 15 s for full table initialisation...")
+            time.sleep(15)
             return
         time.sleep(3)
     raise TimeoutError("Timed out waiting for database health check")
@@ -144,6 +158,34 @@ def installed_apps(cwd, site):
     return [line.strip() for line in (result.stdout or "").splitlines() if line.strip()]
 
 
+def install_app_with_retry(cwd, site, app, max_retries=5, delay=20):
+    """Install a bench app, retrying on transient MariaDB error 1412."""
+    for attempt in range(1, max_retries + 1):
+        print(f"Installing {app} on {site} (attempt {attempt}/{max_retries})...")
+        result = run(
+            [
+                "docker", "compose", "exec", "-T", "backend",
+                "bench", "--site", site, "install-app", app,
+            ],
+            cwd=cwd,
+            check=False,
+            capture_output=True,
+        )
+        if result.returncode == 0:
+            print(f"{app} installed successfully.")
+            return
+        combined = (result.stdout or "") + (result.stderr or "")
+        if "1412" in combined or "Table definition has changed" in combined:
+            print(f"  Transient DB error (1412) on {app}, retrying in {delay}s...")
+            time.sleep(delay)
+        else:
+            # Non-retryable error – surface it
+            print(result.stdout or "")
+            print(result.stderr or "")
+            raise subprocess.CalledProcessError(result.returncode, result.args)
+    raise RuntimeError(f"Failed to install {app} after {max_retries} attempts.")
+
+
 def ensure_site(cwd, site, admin_password, db_root_password):
     if not site_exists(cwd, site):
         print(f"Creating tenant site: {site}")
@@ -174,40 +216,10 @@ def ensure_site(cwd, site, admin_password, db_root_password):
 
     apps = installed_apps(cwd, site)
     if "erpnext" not in apps:
-        print(f"Installing erpnext on {site}")
-        run(
-            [
-                "docker",
-                "compose",
-                "exec",
-                "-T",
-                "backend",
-                "bench",
-                "--site",
-                site,
-                "install-app",
-                "erpnext",
-            ],
-            cwd=cwd,
-        )
+        install_app_with_retry(cwd, site, "erpnext")
 
     if "india_compliance" not in apps:
-        print(f"Installing india_compliance on {site}")
-        run(
-            [
-                "docker",
-                "compose",
-                "exec",
-                "-T",
-                "backend",
-                "bench",
-                "--site",
-                site,
-                "install-app",
-                "india_compliance",
-            ],
-            cwd=cwd,
-        )
+        install_app_with_retry(cwd, site, "india_compliance")
 
 
 def set_site_hostname(cwd, site, host_name):
@@ -267,29 +279,17 @@ def bootstrap_primary_admin(cwd, site):
 
 
 def pull_ollama_model(cwd, model):
-    print(f"Pulling local LLM model in Ollama: {model}")
-    run(
-        [
-            "docker",
-            "compose",
-            "exec",
-            "-T",
-            "ollama",
-            "ollama",
-            "pull",
-            model,
-        ],
-        cwd=cwd,
-    )
+    print(f"Checking for LLM model: {model}")
+    try:
+        # Try local ollama command first
+        subprocess.run(["ollama", "pull", model], check=True)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        print(f"Warning: Could not pull {model} via local 'ollama' command.")
 
 
 def start_ollama_in_background(cwd):
-    subprocess.Popen(
-        ["docker", "compose", "up", "-d", "ollama"],
-        cwd=cwd,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
+    # No-op as we use host's Ollama
+    pass
 
 
 def parse_tenants(raw_tenants):
@@ -306,15 +306,16 @@ def run_server():
     parser.add_argument("--tenants", default=os.getenv("TENANT_SITES", "frontend"))
     parser.add_argument("--admin-password", default=os.getenv("ADMIN_PASSWORD", "admin"))
     parser.add_argument("--db-root-password", default=os.getenv("DB_ROOT_PASSWORD", "admin"))
-    parser.add_argument("--ollama-model", default=os.getenv("OLLAMA_MODEL", "mistral:7b-instruct"))
+    parser.add_argument("--ollama-model", default=os.getenv("OLLAMA_MODEL", "deepseek-r1:7b"))
     parser.add_argument("--no-build", action="store_true")
     parser.add_argument("--skip-migrate", action="store_true")
     parser.add_argument("--skip-ollama-pull", action="store_true")
-    parser.add_argument("--skip-ollama-service", action="store_true")
+    parser.add_argument("--skip-ollama-service", default=True, action="store_true")
     parser.add_argument("--follow-logs", action="store_true")
     args = parser.parse_args()
 
     cwd = os.path.abspath(os.path.dirname(__file__))
+    check_docker_daemon()
     tenants = parse_tenants(args.tenants)
     frontend_port = os.getenv("FRONTEND_PORT", "8085")
 

@@ -1,122 +1,145 @@
-<div class="portal-shell">
-  <h1>Create Your Business Account</h1>
-  <p>Register a user-side account linked to the admin-managed Fearoff AIAD portal.</p>
+<div class="far-wrap">
 
-  <form id="register-form" class="portal-form">
-    <label>Full Name
-      <input type="text" name="full_name" required>
-    </label>
+  <nav class="far-nav">
+    <a class="far-brand" href="/user-portal"><span class="far-dot"></span>Fearoff AIAD</a>
+    <div class="far-navlinks">
+      <a class="far-nl" href="/user-portal">📊 Dashboard</a>
+      <a class="far-nl" href="/gst-copilot">🤖 GST Copilot</a>
+      <a class="far-nl far-active" href="/user-register">➕ Register</a>
+      <a class="far-nl" href="/app">📋 ERP Desk</a>
+    </div>
+  </nav>
 
-    <label>Email
-      <input type="email" name="email" required>
-    </label>
+  <div class="far-card">
+    <div class="far-head">
+      <div class="far-head-icon">🏢</div>
+      <div>
+        <h1 class="far-h1">Create Your Business Account</h1>
+        <p class="far-sub">Register to access GST-compliant ERP tools and the AI Copilot</p>
+      </div>
+    </div>
+    <div class="far-body">
+      <form id="far-form" class="far-form">
+        <div class="far-row2">
+          <div class="far-field">
+            <label class="far-label">Full Name</label>
+            <input class="far-input" type="text" name="full_name" placeholder="Param Logaa" required/>
+          </div>
+          <div class="far-field">
+            <label class="far-label">Email Address</label>
+            <input class="far-input" type="email" name="email" placeholder="param@company.com" required/>
+          </div>
+        </div>
+        <div class="far-row2">
+          <div class="far-field">
+            <label class="far-label">Password</label>
+            <input class="far-input" type="password" name="password" placeholder="Min 8 characters" required/>
+          </div>
+          <div class="far-field">
+            <label class="far-label">Company Name</label>
+            <input class="far-input" type="text" name="company_name" placeholder="Acme Pvt. Ltd." required/>
+          </div>
+        </div>
+        <div class="far-row2">
+          <div class="far-field">
+            <label class="far-label">Industry Type</label>
+            <select class="far-input" name="industry_type" required>
+              <option value="Manufacturing">Manufacturing</option>
+              <option value="Wholesale">Wholesale / Distribution</option>
+              <option value="Other">Retail / Other</option>
+            </select>
+          </div>
+          <div class="far-field">
+            <label class="far-label">Website Slug</label>
+            <input class="far-input" type="text" name="website_slug" placeholder="acme-mfg" required/>
+          </div>
+        </div>
+        <button type="submit" class="far-submit" id="far-submit-btn">Create Account →</button>
+      </form>
+      <div id="far-result" class="far-result"></div>
+      <p class="far-login-link">Already have an account? <a href="/login?redirect-to=/user-portal">Sign in here</a></p>
+    </div>
+  </div>
 
-    <label>Password
-      <input type="password" name="password" required>
-    </label>
+  <div class="far-tip">
+    <span>📋</span>
+    <span><strong>Setup guide:</strong> Fill in your business details. The <em>Website Slug</em> is a short unique identifier (e.g. <code>acme-mfg</code>). After registration you'll be redirected to sign in.</span>
+  </div>
 
-    <label>Company Name
-      <input type="text" name="company_name" required>
-    </label>
-
-    <label>Industry Type
-      <select name="industry_type" required>
-        <option value="Manufacturing">Manufacturing</option>
-        <option value="Wholesale">Wholesale</option>
-        <option value="Other">Other</option>
-      </select>
-    </label>
-
-    <label>Website Slug
-      <input type="text" name="website_slug" required placeholder="acme-manufacturing">
-    </label>
-
-    <button type="submit">Create Account</button>
-  </form>
-
-  <pre id="register-result"></pre>
 </div>
 
 <style>
-  .portal-shell {
-    max-width: 720px;
-    margin: 2rem auto;
-    padding: 1.5rem;
-    border: 1px solid #d7dee6;
-    border-radius: 12px;
-    background: #ffffff;
-  }
+.far-wrap *{box-sizing:border-box}
+.far-wrap{
+  font-family:'Inter','Segoe UI',sans-serif;
+  background:linear-gradient(135deg,#0f172a 0%,#134e4a 60%,#0f172a 100%);
+  min-height:90vh;display:flex;flex-direction:column;align-items:center;
+  padding:1.5rem 1rem 2rem;
+  margin:-1rem -15px -15px;
+}
 
-  .portal-form {
-    display: grid;
-    gap: 1rem;
-  }
+.far-nav{width:100%;max-width:640px;display:flex;align-items:center;justify-content:space-between;margin-bottom:1.4rem}
+.far-brand{display:flex;align-items:center;gap:.5rem;text-decoration:none;color:#f0fdfa;font-size:.95rem;font-weight:700}
+.far-dot{width:9px;height:9px;border-radius:50%;background:linear-gradient(135deg,#2dd4bf,#0ea5e9);box-shadow:0 0 8px #2dd4bf80;flex-shrink:0}
+.far-navlinks{display:flex;gap:.4rem;flex-wrap:wrap}
+.far-nl{text-decoration:none;padding:.36rem .8rem;border-radius:999px;font-size:.78rem;font-weight:600;border:1px solid rgba(255,255,255,.14);color:#94a3b8;transition:all .2s}
+.far-nl:hover,.far-active{background:rgba(45,212,191,.15);border-color:#2dd4bf;color:#2dd4bf}
 
-  .portal-form label {
-    display: grid;
-    gap: 0.4rem;
-    font-weight: 600;
-  }
-
-  .portal-form input,
-  .portal-form select,
-  .portal-form button {
-    padding: 0.6rem;
-    border-radius: 8px;
-    border: 1px solid #c7d2de;
-  }
-
-  .portal-form button {
-    background: #0e7490;
-    color: #fff;
-    cursor: pointer;
-    border: none;
-  }
+.far-card{width:100%;max-width:640px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:20px;overflow:hidden;box-shadow:0 24px 56px rgba(0,0,0,.45)}
+.far-head{padding:1.3rem 1.6rem;background:linear-gradient(120deg,rgba(15,118,110,.55),rgba(6,78,59,.65));border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:.9rem}
+.far-head-icon{width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,#2dd4bf,#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0}
+.far-h1{color:#f0fdfa;font-size:1.15rem;font-weight:700;margin:0 0 .2rem}
+.far-sub{color:#99f6e4;font-size:.83rem;margin:0}
+.far-body{padding:1.6rem}
+.far-form{display:flex;flex-direction:column;gap:1.1rem}
+.far-row2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.far-field{display:flex;flex-direction:column;gap:.38rem}
+.far-label{font-size:.76rem;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.05em}
+.far-input{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:.68rem .9rem;color:#f1f5f9;font-family:inherit;font-size:.9rem;outline:none;transition:border-color .2s}
+.far-input:focus{border-color:#2dd4bf;background:rgba(45,212,191,.05)}
+.far-input::placeholder{color:#475569}
+.far-input option{background:#1e293b;color:#f1f5f9}
+.far-submit{width:100%;padding:.85rem;border:none;border-radius:11px;background:linear-gradient(135deg,#0d9488,#0369a1);color:#fff;font-family:inherit;font-size:.97rem;font-weight:700;cursor:pointer;letter-spacing:.02em;transition:all .2s;box-shadow:0 4px 18px rgba(13,148,136,.34);margin-top:.3rem}
+.far-submit:hover{transform:translateY(-2px);box-shadow:0 7px 26px rgba(13,148,136,.48)}
+.far-submit:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.far-result{margin-top:.9rem;padding:.8rem .95rem;border-radius:9px;font-size:.88rem;display:none}
+.far-result.err{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#fca5a5;display:block}
+.far-result.ok{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:#86efac;display:block}
+.far-login-link{margin-top:1.1rem;text-align:center;font-size:.86rem;color:#64748b}
+.far-login-link a{color:#2dd4bf;text-decoration:none;font-weight:600}
+.far-tip{width:100%;max-width:640px;margin-top:.9rem;background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:12px;padding:.7rem 1.1rem;display:flex;align-items:flex-start;gap:.7rem;color:#fde68a;font-size:.82rem;line-height:1.55}
+.far-tip strong{color:#fbbf24}
+.far-tip code{background:rgba(255,255,255,.08);padding:0 4px;border-radius:4px}
+@media(max-width:520px){.far-row2{grid-template-columns:1fr}.far-navlinks{display:none}}
 </style>
 
 <script>
-  const form = document.getElementById("register-form");
-  const result = document.getElementById("register-result");
-
-  form.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const data = Object.fromEntries(new FormData(form));
-
-    try {
-      const response = await fetch(
-        "/api/method/india_compliance.gst_india.api.portal_management.register_portal_user",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data)
-        }
-      );
-
-      const payload = await response.json();
-
-      if (!response.ok || payload.exc_type) {
-        let message = payload.message || payload.exception || "Unable to create account.";
-        if (payload._server_messages) {
-          try {
-            const serverMessages = JSON.parse(payload._server_messages);
-            if (Array.isArray(serverMessages) && serverMessages.length) {
-              message = serverMessages[0];
-            }
-          } catch (parseError) {
-            message = payload.exception || message;
-          }
-        }
-        result.textContent = String(message).replace(/[\[\]"]/g, "");
-        return;
+(function(){
+  const form=document.getElementById("far-form");
+  const result=document.getElementById("far-result");
+  const btn=document.getElementById("far-submit-btn");
+  form.addEventListener("submit",async e=>{
+    e.preventDefault();
+    btn.disabled=true;btn.textContent="Creating account…";
+    result.className="far-result";result.textContent="";
+    const data=Object.fromEntries(new FormData(form));
+    try{
+      const resp=await fetch("/api/method/india_compliance.gst_india.api.portal_management.register_portal_user",{
+        method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)
+      });
+      const payload=await resp.json();
+      if(!resp.ok||payload.exc_type){
+        let msg=payload.message||payload.exception||"Unable to create account.";
+        if(payload._server_messages){try{const sm=JSON.parse(payload._server_messages);if(Array.isArray(sm)&&sm.length)msg=sm[0]}catch{}}
+        result.className="far-result err";result.textContent=String(msg).replace(/[\[\]"]/g,"");
+        btn.disabled=false;btn.textContent="Create Account →";return;
       }
-
-      const responseMessage = payload.message || {};
-      result.textContent = "Account created successfully. Redirecting to login...";
-
-      const loginUrl = responseMessage.login_url || "/login?redirect-to=/user-portal";
-      window.location.href = loginUrl;
-    } catch (error) {
-      result.textContent = `Request failed: ${error.message}`;
+      result.className="far-result ok";result.textContent="✓ Account created! Redirecting to sign in…";
+      setTimeout(()=>{window.location.href=payload.message?.login_url||"/login?redirect-to=/user-portal"},1800);
+    }catch(err){
+      result.className="far-result err";result.textContent="Request failed: "+err.message;
+      btn.disabled=false;btn.textContent="Create Account →";
     }
   });
+})();
 </script>

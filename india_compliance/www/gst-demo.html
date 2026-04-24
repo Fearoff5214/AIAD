@@ -1,0 +1,211 @@
+<div class="gd-wrap">
+<style>
+.gd-wrap{font-family:'Inter',sans-serif;max-width:1100px;margin:0 auto;padding:1rem}
+.gd-tabs{display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap}
+.gd-tab{padding:.5rem 1.1rem;border-radius:8px;border:1px solid #d1d5db;background:#f9fafb;cursor:pointer;font-weight:600;font-size:.88rem;transition:all .2s}
+.gd-tab.ok{border-color:#16a34a;color:#15803d;background:#f0fdf4}
+.gd-tab.err{border-color:#dc2626;color:#dc2626;background:#fef2f2}
+.gd-tab.try{border-color:#0f766e;color:#0f766e;background:#f0fdfa}
+.gd-tab.active{box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.gd-panel{display:none}.gd-panel.show{display:block}
+.inv-box{border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.06)}
+.inv-head{background:linear-gradient(120deg,#1e3a5f,#0f4c75);color:#fff;padding:1rem 1.4rem;display:flex;justify-content:space-between;align-items:flex-start}
+.inv-head h2{margin:0;font-size:1.1rem}
+.inv-head p{margin:.2rem 0 0;opacity:.8;font-size:.82rem}
+.badge-ok{background:#22c55e;color:#fff;border-radius:6px;padding:.2rem .7rem;font-size:.75rem;font-weight:700}
+.badge-err{background:#ef4444;color:#fff;border-radius:6px;padding:.2rem .7rem;font-size:.75rem;font-weight:700}
+.inv-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;padding:1rem 1.4rem;background:#f8fafc;border-bottom:1px solid #e5e7eb;font-size:.85rem}
+.inv-meta strong{display:block;color:#6b7280;font-size:.75rem;margin-bottom:.2rem}
+table.inv-tbl{width:100%;border-collapse:collapse;font-size:.86rem}
+table.inv-tbl thead{background:#f1f5f9}
+table.inv-tbl th{padding:.6rem .9rem;text-align:left;color:#374151;font-weight:600;border-bottom:2px solid #e5e7eb}
+table.inv-tbl td{padding:.65rem .9rem;border-bottom:1px solid #f3f4f6;vertical-align:top}
+.inv-total{display:flex;justify-content:flex-end;padding:.9rem 1.4rem;background:#f8fafc;border-top:1px solid #e5e7eb}
+.tot-grid{display:grid;grid-template-columns:200px 120px;gap:.3rem .5rem;font-size:.88rem;text-align:right}
+.tot-grand{font-weight:700;font-size:1rem;color:#0f766e;border-top:1px solid #d1d5db;padding-top:.4rem;margin-top:.2rem}
+
+/* error highlights */
+.row-err{background:#fff5f5!important}
+.cell-err{color:#dc2626;font-weight:700;position:relative}
+.err-badge{display:inline-block;background:#fef2f2;border:1px solid #fecaca;color:#dc2626;border-radius:4px;padding:.15rem .5rem;font-size:.72rem;font-weight:700;margin-left:.4rem;cursor:help}
+.err-note{background:#fef2f2;border-left:4px solid #ef4444;padding:.7rem 1rem;font-size:.83rem;color:#991b1b;margin:.3rem 0}
+.ok-row{background:#f0fdf4!important}
+
+/* validator */
+.val-form{display:grid;gap:.8rem}
+.val-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:.6rem;align-items:center}
+.val-row input,select{border:1px solid #d1d5db;border-radius:7px;padding:.5rem .7rem;font-size:.85rem;width:100%}
+.val-hdr{font-weight:700;font-size:.78rem;color:#6b7280;text-transform:uppercase;padding:.3rem .7rem}
+.val-btn{padding:.65rem 1.4rem;border:none;border-radius:8px;background:linear-gradient(135deg,#0d9488,#0369a1);color:#fff;font-weight:700;cursor:pointer;font-size:.9rem;margin-top:.5rem}
+.val-result{margin-top:1rem}
+.err-item{background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:.6rem .9rem;margin:.4rem 0;font-size:.85rem;color:#991b1b}
+.ok-item{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:.6rem .9rem;margin:.4rem 0;font-size:.85rem;color:#15803d}
+.section-tip{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:.7rem 1rem;font-size:.83rem;color:#92400e;margin-bottom:.9rem}
+</style>
+
+<h2 style="margin-bottom:.5rem;font-size:1.1rem;color:#111827">📄 GST Invoice Compliance Demo</h2>
+<p style="color:#6b7280;font-size:.88rem;margin-bottom:.9rem">See a correct GST invoice, one with common errors, and validate your own line items.</p>
+
+<div class="gd-tabs">
+  <button class="gd-tab ok active" onclick="showTab('ok',this)">✅ Correct Invoice</button>
+  <button class="gd-tab err" onclick="showTab('err',this)">❌ Invoice with Errors</button>
+  <button class="gd-tab try" onclick="showTab('try',this)">🧮 Validate Your Invoice</button>
+</div>
+
+<!-- TAB 1: CORRECT INVOICE -->
+<div class="gd-panel show" id="gd-ok">
+<div class="inv-box">
+  <div class="inv-head">
+    <div><h2>Tax Invoice</h2><p>Acme Manufacturing Pvt. Ltd. → Tech Solutions India Ltd.</p></div>
+    <span class="badge-ok">✓ GST COMPLIANT</span>
+  </div>
+  <div class="inv-meta">
+    <div><strong>Invoice No.</strong>SINV-2026-0042</div>
+    <div><strong>Date</strong>24-Apr-2026</div>
+    <div><strong>GSTIN (Supplier)</strong>27AABCA1234C1Z5</div>
+    <div><strong>Place of Supply</strong>Maharashtra (27)</div>
+    <div><strong>Payment Due</strong>24-May-2026</div>
+    <div><strong>GSTIN (Buyer)</strong>29AADCT5432B1ZP</div>
+  </div>
+  <table class="inv-tbl">
+    <thead><tr><th>#</th><th>Item</th><th>HSN</th><th>Qty</th><th>Rate (₹)</th><th>Taxable Value (₹)</th><th>GST%</th><th>Tax (₹)</th><th>Total (₹)</th></tr></thead>
+    <tbody>
+      <tr class="ok-row"><td>1</td><td>Industrial Motor (3-Phase)</td><td>8501</td><td>5 Nos</td><td>12,000</td><td>60,000</td><td>18%</td><td>10,800</td><td>70,800</td></tr>
+      <tr class="ok-row"><td>2</td><td>Steel Hex Bolts M12</td><td>7318</td><td>500 Nos</td><td>12</td><td>6,000</td><td>18%</td><td>1,080</td><td>7,080</td></tr>
+      <tr class="ok-row"><td>3</td><td>Corrugated Packing Box</td><td>4819</td><td>10 Nos</td><td>200</td><td>2,000</td><td>12%</td><td>240</td><td>2,240</td></tr>
+    </tbody>
+  </table>
+  <div class="inv-total">
+    <div class="tot-grid">
+      <span>Taxable Value</span><span>₹ 68,000</span>
+      <span>CGST (9%+9%+6%)</span><span>₹ 6,060</span>
+      <span>SGST (9%+9%+6%)</span><span>₹ 6,060</span>
+      <div class="tot-grand">Grand Total</div><div class="tot-grand">₹ 80,120</div>
+    </div>
+  </div>
+</div>
+<div style="margin-top:.8rem;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:.8rem 1rem;font-size:.84rem;color:#15803d">
+  ✅ <strong>Why this is correct:</strong> Each item has the right HSN code. Industrial Motors &amp; Bolts attract 18% GST (Chapter 85/73). Packing boxes attract 12% (Chapter 48). Tax amount = Taxable Value × Rate. CGST + SGST = Total GST (intra-state supply).
+</div>
+</div>
+
+<!-- TAB 2: ERROR INVOICE -->
+<div class="gd-panel" id="gd-err">
+<div class="inv-box">
+  <div class="inv-head" style="background:linear-gradient(120deg,#7f1d1d,#991b1b)">
+    <div><h2>Tax Invoice</h2><p>Acme Manufacturing Pvt. Ltd. → Tech Solutions India Ltd.</p></div>
+    <span class="badge-err">⚠ 3 GST ERRORS</span>
+  </div>
+  <div class="inv-meta">
+    <div><strong>Invoice No.</strong>SINV-2026-0041</div>
+    <div><strong>Date</strong>23-Apr-2026</div>
+    <div><strong>GSTIN (Supplier)</strong>27AABCA1234C1Z5</div>
+    <div><strong>Place of Supply</strong>Maharashtra (27)</div>
+    <div><strong>Payment Due</strong>23-May-2026</div>
+    <div><strong>GSTIN (Buyer)</strong>29AADCT5432B1ZP</div>
+  </div>
+  <table class="inv-tbl">
+    <thead><tr><th>#</th><th>Item</th><th>HSN</th><th>Qty</th><th>Rate (₹)</th><th>Taxable (₹)</th><th>GST%</th><th>Tax (₹)</th><th>Total (₹)</th></tr></thead>
+    <tbody>
+      <tr class="row-err">
+        <td>1</td><td>Industrial Motor (3-Phase)</td><td>8501</td><td>5</td><td>12,000</td><td>60,000</td>
+        <td class="cell-err">12% <span class="err-badge" title="Error 1">ERR 1</span></td>
+        <td class="cell-err">7,200 <span class="err-badge">ERR 1</span></td>
+        <td>67,200</td>
+      </tr>
+      <tr class="row-err">
+        <td>2</td><td>Fresh Vegetables (Raw)</td><td class="cell-err">0701 <span class="err-badge" title="Error 2">ERR 2</span></td><td>100 kg</td><td>50</td><td>5,000</td>
+        <td class="cell-err">5% <span class="err-badge">ERR 2</span></td>
+        <td class="cell-err">250 <span class="err-badge">ERR 2</span></td>
+        <td>5,250</td>
+      </tr>
+      <tr class="row-err">
+        <td>3</td><td>Steel Hex Bolts M12</td><td>7318</td><td>500</td><td>12</td><td>6,000</td>
+        <td>18%</td>
+        <td class="cell-err">1,500 <span class="err-badge" title="Error 3">ERR 3</span></td>
+        <td>7,500</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="inv-total">
+    <div class="tot-grid">
+      <span>Taxable Value</span><span>₹ 71,000</span>
+      <span>Total GST (shown)</span><span class="cell-err">₹ 8,950</span>
+      <div class="tot-grand">Grand Total</div><div class="tot-grand" style="color:#dc2626">₹ 79,950</div>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top:.9rem;display:grid;gap:.6rem">
+  <div class="err-note">
+    <strong>❌ Error 1 — Wrong GST Rate (Row 1: Industrial Motor)</strong><br>
+    Industrial Motors (HSN 8501) attract <strong>18% GST</strong> under Schedule IV of GST tariff. Applied rate is 12%, causing ₹3,600 under-charge. Correct tax = ₹10,800 not ₹7,200. This creates a liability mismatch in GSTR-1 filing.
+  </div>
+  <div class="err-note">
+    <strong>❌ Error 2 — GST Charged on Exempt Item (Row 2: Fresh Vegetables)</strong><br>
+    Raw/unprocessed fresh vegetables (HSN 0701) are <strong>fully exempt from GST (0% rated)</strong>. Charging 5% GST of ₹250 is illegal and must be reversed. Supplying exempt goods with GST violates Section 8 of the CGST Act and may attract penalties.
+  </div>
+  <div class="err-note">
+    <strong>❌ Error 3 — Tax Amount Mismatch (Row 3: Steel Bolts)</strong><br>
+    Taxable value ₹6,000 × 18% = <strong>₹1,080</strong> (correct). Invoice shows ₹1,500 — an over-charge of ₹420. The recipient cannot claim full ITC on the over-charged amount. This will cause GSTR-2A mismatch and ITC reconciliation failures.
+  </div>
+</div>
+</div>
+
+<!-- TAB 3: VALIDATOR -->
+<div class="gd-panel" id="gd-try">
+<div class="section-tip">
+  ⚙️ Enter your invoice line items below. The validator checks GST rates, tax calculation accuracy, and flags common compliance issues.
+</div>
+<div class="val-form" id="val-lines">
+  <div class="val-row val-hdr"><div>Item Description</div><div>HSN Code</div><div>Taxable (₹)</div><div>GST Rate (%)</div><div>Tax Charged (₹)</div></div>
+  <div class="val-row"><input placeholder="e.g. Industrial Motor" class="item-name"/><input placeholder="8501" class="item-hsn"/><input type="number" placeholder="60000" class="item-base"/><select class="item-rate"><option value="0">0% (Exempt)</option><option value="5">5%</option><option value="12" selected>12%</option><option value="18">18%</option><option value="28">28%</option></select><input type="number" placeholder="10800" class="item-tax"/></div>
+  <div class="val-row"><input placeholder="e.g. Packing Box" class="item-name"/><input placeholder="4819" class="item-hsn"/><input type="number" placeholder="2000" class="item-base"/><select class="item-rate"><option value="0">0%</option><option value="5">5%</option><option value="12" selected>12%</option><option value="18">18%</option><option value="28">28%</option></select><input type="number" placeholder="240" class="item-tax"/></div>
+</div>
+<button class="val-btn" onclick="addRow()">+ Add Row</button>
+<button class="val-btn" style="margin-left:.5rem;background:linear-gradient(135deg,#0f766e,#065f46)" onclick="validateInvoice()">🔍 Check Compliance</button>
+<div id="val-result" class="val-result"></div>
+</div>
+
+</div>
+
+<script>
+function showTab(id,btn){
+  document.querySelectorAll('.gd-panel').forEach(p=>p.classList.remove('show'));
+  document.querySelectorAll('.gd-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('gd-'+id).classList.add('show');
+  btn.classList.add('active');
+}
+function addRow(){
+  const c=document.getElementById('val-lines');
+  const r=document.createElement('div');r.className='val-row';
+  r.innerHTML='<input placeholder="Item" class="item-name"/><input placeholder="HSN" class="item-hsn"/><input type="number" placeholder="0" class="item-base"/><select class="item-rate"><option value="0">0%</option><option value="5">5%</option><option value="12" selected>12%</option><option value="18">18%</option><option value="28">28%</option></select><input type="number" placeholder="0" class="item-tax"/>';
+  c.appendChild(r);
+}
+function validateInvoice(){
+  const names=document.querySelectorAll('.item-name');
+  const bases=document.querySelectorAll('.item-base');
+  const rates=document.querySelectorAll('.item-rate');
+  const taxes=document.querySelectorAll('.item-tax');
+  let html='';let ok=true;
+  for(let i=0;i<bases.length;i++){
+    const name=names[i].value||'Row '+(i+1);
+    const base=parseFloat(bases[i].value)||0;
+    const rate=parseFloat(rates[i].value)||0;
+    const tax=parseFloat(taxes[i].value)||0;
+    if(!base&&!tax){continue;}
+    const expected=Math.round(base*rate)/100;
+    const diff=Math.abs(tax-expected);
+    if(diff>1){
+      ok=false;
+      html+=`<div class="err-item">❌ <strong>${name}</strong>: Tax should be ₹${expected.toFixed(0)} (${base} × ${rate}%), but ₹${tax} entered — difference of ₹${diff.toFixed(0)}.</div>`;
+    } else {
+      html+=`<div class="ok-item">✅ <strong>${name}</strong>: Tax ₹${tax} is correct (₹${base} × ${rate}% = ₹${expected.toFixed(0)}).</div>`;
+    }
+  }
+  if(!html) html='<div class="ok-item">Add at least one row with values to validate.</div>';
+  else if(ok) html='<div class="ok-item" style="font-weight:700">✅ All line items are GST compliant!</div>'+html;
+  else html='<div class="err-item" style="font-weight:700">⚠️ Compliance issues found — review errors below.</div>'+html;
+  document.getElementById('val-result').innerHTML=html;
+}
+</script>
