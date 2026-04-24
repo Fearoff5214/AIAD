@@ -32,4 +32,4 @@ def update_item_document(items, taxes):
                     "valid_from": tax.valid_from,
                 },
             )
-            item_to_be_updated.save()
+        item_to_be_updated.save()

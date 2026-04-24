@@ -278,6 +278,25 @@ def bootstrap_primary_admin(cwd, site):
     )
 
 
+def seed_demo_portal_accounts(cwd, site):
+    print(f"Seeding demo portal accounts on {site}")
+    run(
+        [
+            "docker",
+            "compose",
+            "exec",
+            "-T",
+            "backend",
+            "bench",
+            "--site",
+            site,
+            "execute",
+            "india_compliance.gst_india.api.portal_management.ensure_demo_portal_accounts",
+        ],
+        cwd=cwd,
+    )
+
+
 def pull_ollama_model(cwd, model):
     print(f"Checking for LLM model: {model}")
     try:
@@ -342,6 +361,7 @@ def run_server():
 
             if idx == 0:
                 bootstrap_primary_admin(cwd, site)
+                seed_demo_portal_accounts(cwd, site)
 
         # Keep first tenant as default for localhost access.
         run(

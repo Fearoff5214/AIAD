@@ -635,18 +635,21 @@ def get_tax_template(master_doctype, company, is_inter_state, state_code):
 
 
 def set_item_tax_from_hsn_code(item):
-    if not item.taxes and item.gst_hsn_code:
-        hsn_doc = frappe.get_doc("GST HSN Code", item.gst_hsn_code)
+    if not item.gst_hsn_code:
+        return
 
-        for tax in hsn_doc.taxes:
-            item.append(
-                "taxes",
-                {
-                    "item_tax_template": tax.item_tax_template,
-                    "tax_category": tax.tax_category,
-                    "valid_from": tax.valid_from,
-                },
-            )
+    hsn_doc = frappe.get_doc("GST HSN Code", item.gst_hsn_code)
+
+    item.set("taxes", [])
+    for tax in hsn_doc.taxes:
+        item.append(
+            "taxes",
+            {
+                "item_tax_template": tax.item_tax_template,
+                "tax_category": tax.tax_category,
+                "valid_from": tax.valid_from,
+            },
+        )
 
 
 def validate_reverse_charge_transaction(doc, method=None):
