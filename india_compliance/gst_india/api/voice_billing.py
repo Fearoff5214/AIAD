@@ -413,3 +413,31 @@ def get_item_suggestions(query):
             suggestions.append({"name": item_name, "hsn": hsn, "gst_rate": gst})
 
     return {"suggestions": suggestions[:8]}
+
+@frappe.whitelist(allow_guest=True)
+def get_gst_by_hsn(hsn_code):
+    """
+    POST /api/method/india_compliance.gst_india.api.voice_billing.get_gst_by_hsn
+    Returns GST rate for a given HSN code.
+    """
+    hsn_code = (hsn_code or "").strip()
+    if not hsn_code:
+        return {"success": False}
+
+    # Reverse lookup in cache
+    for item_name, (hsn, gst) in _HSN_CACHE.items():
+        if hsn == hsn_code:
+            return {"success": True, "hsn": hsn, "gst_rate": gst}
+
+    # Common fallback chapters based on India GST
+    if hsn_code.startswith("10") or hsn_code.startswith("07") or hsn_code.startswith("08") or hsn_code.startswith("0401"):
+        return {"success": True, "hsn": hsn_code, "gst_rate": 0}
+    if hsn_code.startswith("11") or hsn_code.startswith("15") or hsn_code.startswith("17"):
+        return {"success": True, "hsn": hsn_code, "gst_rate": 5}
+    if hsn_code.startswith("30") or hsn_code.startswith("48"):
+        return {"success": True, "hsn": hsn_code, "gst_rate": 12}
+    if hsn_code.startswith("2202") or hsn_code.startswith("2523"):
+        return {"success": True, "hsn": hsn_code, "gst_rate": 28}
+
+    # Default fallback
+    return {"success": True, "hsn": hsn_code, "gst_rate": 18}

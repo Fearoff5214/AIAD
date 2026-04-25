@@ -56,15 +56,77 @@ def _preprocess_image(raw_bytes):
     return img
 
 
+# Singleton — initialise once per worker process (model download only on first use)
+_PADDLE_OCR = None
+
+def _get_paddle():
+    """Lazy-load PaddleOCR singleton to avoid slow startup."""
+    global _PADDLE_OCR
+    if _PADDLE_OCR is None:
+        try:
+            from paddleocr import PaddleOCR
+            # lang='en' is fastest; use_angle_cls=True handles rotated scans
+            _PADDLE_OCR = PaddleOCR(use_angle_cls=True, lang='en', show_log=False)
+        except ImportError:
+            pass
+    return _PADDLE_OCR
+
+
+def _run_paddleocr(img):
+    """
+    Run PaddleOCR on a PIL Image and return a plain text string.
+    Falls back to Tesseract if PaddleOCR is unavailable.
+    """
+    import numpy as np
+
+    ocr = _get_paddle()
+    if ocr is None:
+        # Fallback to tesseract
+        return _run_tesseract(img)
+
+    img_array = np.array(img.convert("RGB"))
+    result = ocr.ocr(img_array, cls=True)
+
+    if not result or not result[0]:
+        return ""
+
+    # result[0] is a list of [bbox, (text, confidence)]
+    # Sort top-to-bottom (y of bbox centre), then left-to-right
+    lines = []
+    for item in result[0]:
+        bbox, (text, conf) = item
+        # bbox = [[x1,y1],[x2,y2],[x3,y3],[x4,y4]]
+        y_centre = (bbox[0][1] + bbox[2][1]) / 2
+        x_left = bbox[0][0]
+        lines.append((y_centre, x_left, text))
+
+    lines.sort(key=lambda t: (round(t[0] / 15) * 15, t[1]))  # group by ~15px rows
+
+    # Group tokens on the same row into a single line
+    grouped = []
+    prev_y = None
+    row_tokens = []
+    for y, x, text in lines:
+        if prev_y is None or abs(y - prev_y) > 15:
+            if row_tokens:
+                grouped.append(" ".join(row_tokens))
+            row_tokens = [text]
+            prev_y = y
+        else:
+            row_tokens.append(text)
+    if row_tokens:
+        grouped.append(" ".join(row_tokens))
+
+    return "\n".join(grouped)
+
+
 def _run_tesseract(img):
-    """Run Tesseract OCR. psm 4 handles multi-column invoice tables well."""
+    """Run Tesseract OCR (fallback). psm 4 handles multi-column invoice tables."""
     try:
         import pytesseract
     except ImportError:
-        frappe.throw(_("Install pytesseract: pip install pytesseract"))
+        frappe.throw(_("Neither PaddleOCR nor pytesseract is installed."))
 
-    # psm 4: assume a single column of text of variable sizes (good for tabular invoices)
-    # Try psm 6 as fallback too if needed
     config = "--psm 4 --oem 1"
     return pytesseract.image_to_string(img, config=config)
 
@@ -439,8 +501,8 @@ def extract_ocr_data(image_base64, filename=None):
     # Preprocess
     img = _preprocess_image(raw_bytes)
 
-    # OCR
-    raw_text = _run_tesseract(img)
+    # OCR  — PaddleOCR primary, Tesseract fallback
+    raw_text = _run_paddleocr(img)
     clean_text = _normalize_text(raw_text)
 
     # Parse
