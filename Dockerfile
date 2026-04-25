@@ -14,7 +14,7 @@ WORKDIR /home/frappe/frappe-bench
 COPY --chown=frappe:frappe . apps/india_compliance/
 
 # Install python dependencies for the app + OCR libs
-RUN /home/frappe/frappe-bench/env/bin/pip install -e apps/india_compliance pytesseract Pillow numpy paddlepaddle paddleocr
+RUN /home/frappe/frappe-bench/env/bin/pip install -e apps/india_compliance pytesseract Pillow numpy "paddlepaddle==2.6.2" "paddleocr==2.9.1"
 
 # Add the app to Frappe's installed apps list
 RUN echo "" >> sites/apps.txt && echo "india_compliance" >> sites/apps.txt

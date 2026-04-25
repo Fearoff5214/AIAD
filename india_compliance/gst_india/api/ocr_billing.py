@@ -64,9 +64,21 @@ def _get_paddle():
     global _PADDLE_OCR
     if _PADDLE_OCR is None:
         try:
+            import logging
+            import os
+            # Skip slow connectivity check (models cached after first run)
+            os.environ.setdefault("PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK", "True")
+            # Suppress verbose logs
+            for _noisy in ("ppocr", "paddleocr", "paddle", "root"):
+                logging.getLogger(_noisy).setLevel(logging.WARNING)
+
             from paddleocr import PaddleOCR
-            # lang='en' is fastest; use_angle_cls=True handles rotated scans
+            # v2 API: use_angle_cls corrects rotated scans
             _PADDLE_OCR = PaddleOCR(use_angle_cls=True, lang='en', show_log=False)
+        except TypeError:
+            # show_log removed in some builds — retry without it
+            from paddleocr import PaddleOCR
+            _PADDLE_OCR = PaddleOCR(use_angle_cls=True, lang='en')
         except ImportError:
             pass
     return _PADDLE_OCR
@@ -74,35 +86,46 @@ def _get_paddle():
 
 def _run_paddleocr(img):
     """
-    Run PaddleOCR on a PIL Image and return a plain text string.
-    Falls back to Tesseract if PaddleOCR is unavailable.
+    Run PaddleOCR v2 on a PIL Image and return a plain text string.
+    Falls back to Tesseract if PaddleOCR is unavailable or errors.
     """
     import numpy as np
 
     ocr = _get_paddle()
     if ocr is None:
-        # Fallback to tesseract
         return _run_tesseract(img)
 
     img_array = np.array(img.convert("RGB"))
-    result = ocr.ocr(img_array, cls=True)
 
+    try:
+        # PaddleOCR v2 API
+        result = ocr.ocr(img_array, cls=True)
+    except Exception:
+        return _run_tesseract(img)
+
+    # result is a list of pages; result[0] is list of [bbox, (text, conf)]
     if not result or not result[0]:
         return ""
 
-    # result[0] is a list of [bbox, (text, confidence)]
-    # Sort top-to-bottom (y of bbox centre), then left-to-right
     lines = []
     for item in result[0]:
-        bbox, (text, conf) = item
-        # bbox = [[x1,y1],[x2,y2],[x3,y3],[x4,y4]]
-        y_centre = (bbox[0][1] + bbox[2][1]) / 2
-        x_left = bbox[0][0]
-        lines.append((y_centre, x_left, text))
+        try:
+            bbox, (text, conf) = item
+            if not text or not text.strip():
+                continue
+            y_centre = (bbox[0][1] + bbox[2][1]) / 2
+            x_left = bbox[0][0]
+            lines.append((y_centre, x_left, text.strip()))
+        except Exception:
+            pass
 
-    lines.sort(key=lambda t: (round(t[0] / 15) * 15, t[1]))  # group by ~15px rows
+    if not lines:
+        return ""
 
-    # Group tokens on the same row into a single line
+    # Sort top-to-bottom (15px row bands), then left-to-right
+    lines.sort(key=lambda t: (round(t[0] / 15) * 15, t[1]))
+
+    # Merge tokens on the same row into single text lines
     grouped = []
     prev_y = None
     row_tokens = []
@@ -118,6 +141,9 @@ def _run_paddleocr(img):
         grouped.append(" ".join(row_tokens))
 
     return "\n".join(grouped)
+
+
+
 
 
 def _run_tesseract(img):
