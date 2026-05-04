@@ -14,21 +14,45 @@ from frappe.utils import now_datetime
 
 TAILORED_FEATURES = {
     "Manufacturing": [
-        # Always-on core modules
         "Accounting", "GST India", "Buying", "Selling",
-        # Manufacturing-specific
         "Manufacturing", "Stock", "Quality", "Projects", "Support", "CRM",
-        # GST tools
         "GST and E-Invoice Automation", "E-Way Bill",
+    ],
+    "Sales": [
+        "Accounting", "GST India", "Selling", "CRM",
+        "Pricing Rules", "Stock", "Support",
+        "GST and E-Invoice Automation",
+    ],
+    "Service": [
+        "Accounting", "GST India", "Selling", "Support",
+        "Projects", "CRM", "HR",
+        "GST and E-Invoice Automation",
+    ],
+    "Retail": [
+        "Accounting", "GST India", "Selling", "Buying",
+        "Stock", "Pricing Rules", "CRM",
+        "GST and E-Invoice Automation",
     ],
     "Wholesale": [
-        # Always-on core modules
         "Accounting", "GST India", "Buying", "Selling",
-        # Wholesale-specific
         "Stock", "CRM", "Pricing Rules",
-        # GST tools
         "GST and E-Invoice Automation", "E-Way Bill",
     ],
+    "Other": [
+        "Accounting", "GST India", "Selling", "Buying",
+        "Stock", "CRM",
+        "GST and E-Invoice Automation",
+    ],
+}
+
+# Maps each industry type to its dedicated frontend dashboard URL
+INDUSTRY_DASHBOARD_URLS = {
+    "Manufacturing": "/user-dashboard-manufacturing",
+    "Sales": "/user-dashboard-sales",
+    "Service": "/user-dashboard-service",
+    "Retail": "/user-dashboard-retail",
+    "Wholesale": "/user-dashboard-wholesale",
+    "Other": "/user-dashboard-other",
 }
 
 
@@ -326,9 +350,9 @@ def register_portal_user(full_name, email, password, company_name, industry_type
     if frappe.db.exists("User", email):
         frappe.throw(_("A user with this email already exists"))
 
-    industry_type = (industry_type or "Wholesale").strip().title()
+    industry_type = (industry_type or "Other").strip().title()
     if industry_type not in TAILORED_FEATURES:
-        industry_type = "Wholesale"
+        industry_type = "Other"
 
     user = frappe.get_doc(
         {
@@ -356,12 +380,38 @@ def register_portal_user(full_name, email, password, company_name, industry_type
     )
     tenant.insert(ignore_permissions=True)
 
+    dashboard_url = INDUSTRY_DASHBOARD_URLS.get(industry_type, "/user-portal")
+
     return {
         "message": "Account created successfully",
         "tenant": tenant.name,
         "industry_type": industry_type,
         "enabled_features": TAILORED_FEATURES[industry_type],
-        "login_url": "/login?redirect-to=/user-portal",
+        "dashboard_url": dashboard_url,
+        "login_url": f"/login?redirect-to={dashboard_url}",
+    }
+
+
+@frappe.whitelist()
+def get_user_dashboard_page():
+    """Return the correct dashboard URL for the logged-in user's industry type."""
+    if frappe.session.user == "Guest":
+        frappe.throw(_("Login required"), frappe.PermissionError)
+
+    tenant_name = _get_tenant_for_user(frappe.session.user)
+    if not tenant_name:
+        return {"dashboard_url": "/user-portal", "industry_type": None}
+
+    tenant = frappe.get_doc("Portal Tenant", tenant_name)
+    industry_type = tenant.industry_type or "Other"
+    dashboard_url = INDUSTRY_DASHBOARD_URLS.get(industry_type, "/user-portal")
+
+    return {
+        "dashboard_url": dashboard_url,
+        "industry_type": industry_type,
+        "company_name": tenant.company_name,
+        "website_slug": tenant.website_slug,
+        "enabled_features": json.loads(tenant.enabled_features_json or "[]"),
     }
 
 
@@ -509,6 +559,31 @@ def ensure_create_account_nav_item():
     }
 
 
+def set_platform_branding():
+    """Override Frappe's default app name with 'GST Compliance Platform' across System and Website Settings."""
+    APP_TITLE = "GST Compliance Platform"
+
+    # System Settings – controls the 'Login to <app_name>' heading
+    try:
+        sys_settings = frappe.get_single("System Settings")
+        sys_settings.app_name = APP_TITLE
+        sys_settings.save(ignore_permissions=True)
+    except Exception:
+        pass
+
+    # Website Settings – controls browser tab title, header, and login page heading
+    try:
+        web_settings = frappe.get_single("Website Settings")
+        web_settings.app_name = APP_TITLE
+        web_settings.title = APP_TITLE
+        web_settings.save(ignore_permissions=True)
+    except Exception:
+        pass
+
+    frappe.db.commit()
+    return {"message": _("Platform branding set"), "title": APP_TITLE}
+
+
 def ensure_primary_admin_account():
     email = os.getenv("PRIMARY_ADMIN_EMAIL", "parameshlogaa@gmail.com").strip().lower()
     password = os.getenv("PRIMARY_ADMIN_PASSWORD", "PE42026")
@@ -543,6 +618,7 @@ def ensure_primary_admin_account():
         tenant.save(ignore_permissions=True)
 
     ensure_create_account_nav_item()
+    set_platform_branding()
 
     return {"message": _("Primary admin account ensured"), "email": email}
 
@@ -553,9 +629,9 @@ def ensure_demo_portal_accounts():
             "full_name": "Test Manufacturer",
             "email": "test_manufacturer@example.com",
             "password": "Test@12345",
-            "company_name": "Test_Manufactuer",
+            "company_name": "Test_Manufacturer",
             "industry_type": "Manufacturing",
-            "website_slug": "test-manufactuer",
+            "website_slug": "test-manufacturer",
         },
         {
             "full_name": "Test Wholesaler",
@@ -565,6 +641,30 @@ def ensure_demo_portal_accounts():
             "industry_type": "Wholesale",
             "website_slug": "test-wholesaler",
         },
+        {
+            "full_name": "Test Sales Agent",
+            "email": "test_sales@example.com",
+            "password": "Test@12345",
+            "company_name": "Test_Sales",
+            "industry_type": "Sales",
+            "website_slug": "test-sales",
+        },
+        {
+            "full_name": "Test Service Provider",
+            "email": "test_service@example.com",
+            "password": "Test@12345",
+            "company_name": "Test_Service",
+            "industry_type": "Service",
+            "website_slug": "test-service",
+        },
+        {
+            "full_name": "Test Retailer",
+            "email": "test_retail@example.com",
+            "password": "Test@12345",
+            "company_name": "Test_Retail",
+            "industry_type": "Retail",
+            "website_slug": "test-retail",
+        },
     ]
 
     created = []
@@ -572,6 +672,7 @@ def ensure_demo_portal_accounts():
         industry_type = account["industry_type"]
         if industry_type not in TAILORED_FEATURES:
             industry_type = "Other"
+        account["industry_type"] = industry_type
 
         if frappe.db.exists("User", account["email"]):
             user = frappe.get_doc("User", account["email"])

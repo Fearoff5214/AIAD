@@ -28,7 +28,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Industry Type",
-   "options": "Manufacturing\nWholesale\nOther",
+   "options": "Manufacturing\nSales\nService\nRetail\nWholesale\nOther",
    "reqd": 1
   },
   {

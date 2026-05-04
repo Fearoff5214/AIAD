@@ -105,11 +105,9 @@ def _call_ollama(question, context):
             data = json.loads(content)
             return data.get("response", "").strip()
     except urllib.error.URLError:
-        frappe.throw(
-            _(
-                "Local LLM service is unavailable. Please ensure Ollama is running and model is pulled."
-            )
-        )
+        return None  # Caller will handle gracefully
+    except Exception:
+        return None
 
 
 @frappe.whitelist(allow_guest=True)
@@ -117,24 +115,105 @@ def gst_copilot_suggested_questions():
     return {"questions": SUGGESTED_QUESTIONS}
 
 
+
+_DATA_PATTERNS = [
+    (re.compile(r'\b(past|last)\s+(\d+)\s+(day|days)\b', re.I), 'days'),
+    (re.compile(r'\b(today|today\'s)\b', re.I), 'today'),
+    (re.compile(r'\b(recent|latest|new)\s*(bill|invoice|bills|invoices)\b', re.I), 'recent'),
+    (re.compile(r'\b(show|list|get|give)\s+.*?(bill|invoice)\b', re.I), 'recent'),
+]
+
+
+def _handle_data_query(question):
+    """
+    Detect intent to retrieve billing/invoice data.
+    Returns an answer string if handled, else None.
+    """
+    q_lower = question.lower()
+
+    # Figure out time range
+    days = None
+    for pattern, intent in _DATA_PATTERNS:
+        m = pattern.search(question)
+        if m:
+            if intent == 'days':
+                try: days = int(m.group(2))
+                except Exception: days = 7
+            elif intent == 'today':
+                days = 1
+            else:
+                days = 7
+            break
+
+    if days is None:
+        return None  # Not a data query
+
+    try:
+        since = frappe.utils.add_days(frappe.utils.today(), -days)
+        invoices = frappe.db.sql(
+            """
+            SELECT invoice_number, date, customer, grand_total, source
+            FROM `tabOCR Invoice`
+            WHERE date >= %s
+            ORDER BY date DESC
+            LIMIT 20
+            """,
+            (since,),
+            as_dict=True,
+        )
+
+        if not invoices:
+            return f"No invoices found in the past {days} day(s). Try scanning or creating one via Smart Billing."
+
+        lines = [f"Found **{len(invoices)}** invoice(s) from the past {days} day(s):\n"]
+        for inv in invoices:
+            lines.append(
+                f"• **{inv.get('invoice_number','?')}** | "
+                f"{inv.get('date','')} | "
+                f"₹{inv.get('grand_total',0):.2f} | "
+                f"{inv.get('customer','') or 'Guest'}"
+            )
+        return "\n".join(lines)
+
+    except Exception as e:
+        err = str(e)
+        if "doesn't exist" in err or "Table" in err:
+            return (
+                f"No billing records found yet. "
+                "Use Smart Billing to scan or voice-enter invoices — they'll appear here once saved."
+            )
+        return f"Could not retrieve invoices: {err}"
+
+
 @frappe.whitelist(allow_guest=True)
 def gst_copilot_chat(question):
     question = (question or "").strip()
     if not question:
-        frappe.throw(_("Question is required"))
+        return {"answer": "Please type a question.", "suggest_verify": False}
 
+    # 1. Check if it's a data/invoice retrieval intent
+    data_answer = _handle_data_query(question)
+    if data_answer is not None:
+        return {"answer": data_answer, "suggest_verify": False}
+
+    # 2. Knowledge-base RAG for compliance questions
     knowledge = _load_knowledge()
     context = _best_context_sections(question, knowledge)
 
     if not context:
         return {
-            "answer": "I don't have enough verified GST context to answer that safely.",
+            "answer": (
+                "I don't have verified GST context for that. "
+                "Try asking about invoicing rules, e-way bills, GSTR filing, or HSN/SAC codes."
+            ),
             "suggest_verify": True,
         }
 
     answer = _call_ollama(question, context)
     if not answer:
-        answer = "I don't have enough verified GST context to answer that safely."
+        # Ollama unavailable — return knowledge snippet directly
+        snippet = context[:800].strip()
+        answer = f"*(AI offline — showing reference)*\n\n{snippet}"
 
     return {
         "answer": answer,

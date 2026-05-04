@@ -25,6 +25,7 @@
 <script>
 import AuthForm from "../components/auth/AuthForm.vue";
 import MarketingInfo from "../components/auth/MarketingInfo.vue";
+import store from "../store/index";
 
 export default {
   components: {
@@ -57,15 +58,17 @@ export default {
   },
 
   beforeRouteEnter(to, from, next) {
-    next((vm) => {
-      if (vm.$store.getters.isLoggedIn)
-        return next({ name: "home", replace: true });
+    if (store.getters.isLoggedIn) {
+      window.location.replace("/user-portal");
+      return;
+    }
 
-      if (vm.$store.getters.hasSession)
-        return next({ name: "mailSent", replace: true });
+    if (store.getters.hasSession) {
+      next({ name: "mailSent", replace: true });
+      return;
+    }
 
-      next();
-    });
+    next();
   },
 };
 </script>

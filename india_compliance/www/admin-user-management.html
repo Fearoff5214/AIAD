@@ -1,4 +1,4 @@
-{% set is_system_manager = frappe.has_permission("System Manager", "read") if frappe.session.user != "Guest" else False %}
+{% set is_system_manager = ("System Manager" in frappe.get_roles()) if frappe.session.user != "Guest" else False %}
 <div class="admin-page">
 
   <!-- Sidebar -->
@@ -226,12 +226,15 @@
       const active=users.filter(u=>u.enabled!==0).length;
       document.getElementById("stat-active").textContent=active;
       if(!users.length){usersDiv.innerHTML='<div class="loading">No portal users found.</div>';return}
+      const DASH_URLS={Manufacturing:'/user-dashboard-manufacturing',Sales:'/user-dashboard-sales',Service:'/user-dashboard-service',Retail:'/user-dashboard-retail',Wholesale:'/user-dashboard-wholesale',Other:'/user-dashboard-other'};
       const table=document.createElement("table");
-      table.innerHTML=`<thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Industry</th></tr></thead>`;
+      table.innerHTML=`<thead><tr><th>Company</th><th>User</th><th>Industry</th><th>Admin</th><th>Dashboard</th></tr></thead>`;
       const tbody=document.createElement("tbody");
       users.forEach(u=>{
+        const it=u.industry_type||'–';
+        const dashUrl=DASH_URLS[it]||'/user-portal';
         const tr=document.createElement("tr");
-        tr.innerHTML=`<td>${u.full_name||u.name||"-"}</td><td>${u.email||"-"}</td><td>${u.role||"-"}</td><td>${u.industry_type||"-"}</td>`;
+        tr.innerHTML=`<td>${u.company_name||u.name||'–'}</td><td>${u.user||'–'}</td><td><span style="background:rgba(45,212,191,.12);color:#2dd4bf;border:1px solid rgba(45,212,191,.25);border-radius:999px;padding:.15rem .55rem;font-size:.75rem;font-weight:700">${it}</span></td><td>${u.assigned_admin||'–'}</td><td><a href="${dashUrl}" style="color:#2dd4bf;text-decoration:none;font-size:.8rem;font-weight:600">View →</a></td>`;
         tbody.appendChild(tr);
       });
       table.appendChild(tbody);

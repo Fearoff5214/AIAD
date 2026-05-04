@@ -14,7 +14,9 @@ after_install = "india_compliance.install.after_install"
 before_tests = "india_compliance.tests.before_tests"
 boot_session = "india_compliance.boot.set_bootinfo"
 
-app_include_js = "gst_india.bundle.js"
+# app_include_js disabled temporarily because gst_india.bundle.js is not currently buildable
+# with the present Vue/Vue Router dependency mismatch.
+# app_include_js = "/assets/india_compliance/js/gst_india.bundle.js"
 
 doctype_js = {
     "Address": "gst_india/client_scripts/address.js",
@@ -215,7 +217,7 @@ fixtures = [
 # ----------
 
 # application home page (will override Website Settings)
-# home_page = "login"
+home_page = "user-portal"
 
 # website user home page (by Role)
 # role_home_page = {

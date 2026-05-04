@@ -224,6 +224,8 @@
         <p>Upload, OCR, voice bill entry, reconcile, and export</p>
       </div>
 
+      <div id="kpi-summary"></div>
+
 
 
       <div class="workspace-grid">
@@ -380,7 +382,7 @@
 
   // ─── ERPNext module definitions (icon, description, /app URL, colour) ───────
   const MODULE_DEFS = {
-    "Accounting":     { icon:"💰", label:"Accounting",       url:"/app/general-ledger",          color:"#0369a1", desc:"Journal entries, ledger, P&L, balance sheet" },
+    "Accounting":     { icon:"💰", label:"Accounting",       url:"/app/accounting",              color:"#0369a1", desc:"Journal entries, ledger, P&L, balance sheet" },
     "GST India":      { icon:"🇮🇳", label:"GST India",        url:"/app/gst-settings",             color:"#0f766e", desc:"E-invoice, GSTR filing, HSN codes, GST reports" },
     "Buying":         { icon:"🛒", label:"Buying",           url:"/app/purchase-order",           color:"#7c3aed", desc:"Purchase orders, suppliers, RFQs" },
     "Selling":        { icon:"🏷️", label:"Selling",          url:"/app/sales-order",              color:"#db2777", desc:"Sales orders, quotations, customers" },
@@ -497,7 +499,17 @@
         renderSectorNav("Wholesale");
         return;
       }
-      const industry = data.industry_type === "Other" ? "Wholesale" : (data.industry_type || "Wholesale");
+      const dashboardResp = await fetch("/api/method/india_compliance.gst_india.api.portal_management.get_user_dashboard_page");
+      const dashboardPayload = await dashboardResp.json();
+      const dashboardData = dashboardPayload.message || {};
+      const dashboardUrl = dashboardData.dashboard_url || "/user-portal";
+
+      if (dashboardUrl && window.location.pathname !== dashboardUrl) {
+        window.location.replace(dashboardUrl);
+        return;
+      }
+
+      const industry = data.industry_type || "Wholesale";
       document.getElementById("company-title").textContent = data.company_name || "My Company";
       document.getElementById("industry-pill").textContent = industry;
       document.getElementById("welcome-line").textContent = `Welcome ${data.tenant}. Your workspace is tuned for ${industry.toLowerCase()} operations.`;
@@ -828,7 +840,17 @@
   async function loadDashboardSummary() {
     const res = await apiCall('india_compliance.gst_india.api.portal_management.gst_dashboard_summary');
     const d = (res && res.data) || {};
-    document.getElementById('kpi-summary').innerHTML =
+    let kpiSummary = document.getElementById('kpi-summary');
+    if (!kpiSummary) {
+      const panel = document.querySelector('.gst-workspace-panel');
+      if (!panel) return;
+      kpiSummary = document.createElement('div');
+      kpiSummary.id = 'kpi-summary';
+      const workspaceGrid = panel.querySelector('.workspace-grid');
+      panel.insertBefore(kpiSummary, workspaceGrid || null);
+    }
+
+    kpiSummary.innerHTML =
       "<div class='kpi-row'>" +
       "<div class='kpi-item'><strong>" + (d.total_invoices || 0) + '</strong><div>Total</div></div>' +
       "<div class='kpi-item'><strong>" + (d.matched || 0) + '</strong><div>Matched</div></div>' +
@@ -849,9 +871,22 @@
     document.getElementById('workspace-output').innerHTML = "<textarea rows='10' style='width:100%'>" + csv + '</textarea>';
   }
 
-  loadFeatures();
-  loadDashboardSummary();
-  loadInvoices();
+  async function initPortal() {
+    loadFeatures();
+    try {
+      const authResp = await fetch('/api/method/frappe.auth.get_logged_user');
+      const authData = await authResp.json();
+      const user = authData && authData.message;
+      if (user && user !== 'Guest') {
+        await loadDashboardSummary();
+        await loadInvoices();
+      }
+    } catch (e) {
+      // Keep portal usable even when auth check fails.
+    }
+  }
+
+  initPortal();
 </script>
 </body>
 </html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Service Dashboard – Fearoff AIAD</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/assets/india_compliance/css/ud-shared.css"/>
+  <style>
+    :root{--accent:#0ea5e9;--accent2:#6366f1;--accent-glow:rgba(14,165,233,.35);}
+    .brand-dot{background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 0 10px var(--accent-glow)}
+    .brand-type,.eyebrow,.stat-val,.sn.active,.gst-chip{color:var(--accent)}
+    .hero{background:linear-gradient(120deg,rgba(14,165,233,.18),rgba(99,102,241,.1),rgba(0,0,0,0));border-color:rgba(14,165,233,.25)}
+    .hero-badge{background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 4px 16px var(--accent-glow)}
+    .sn.active{background:rgba(14,165,233,.12);border:1px solid rgba(14,165,233,.25)}
+    .ph-badge{background:rgba(14,165,233,.15);color:var(--accent);border-color:rgba(14,165,233,.3)}
+    .gst-chip{background:rgba(14,165,233,.1);border-color:rgba(14,165,233,.25)}.gst-chip:hover{background:rgba(14,165,233,.2)}
+    .qa-btn{background:linear-gradient(135deg,var(--accent),var(--accent2))}
+  </style>
+</head>
+<body>
+<div class="page">
+  <aside class="sidebar">
+    <div class="brand"><div class="brand-dot"></div><div><div class="brand-name">Fearoff AIAD</div><div class="brand-type">🎧 SERVICE</div></div></div>
+    <nav class="sidebar-nav">
+      <span class="sn-section">Workspace</span>
+      <a href="/user-dashboard-service" class="sn active">🏠 Dashboard</a>
+      <a href="/smart-billing" class="sn">⚡ Smart Billing</a>
+      <a href="/gst-copilot" class="sn">🤖 GST Copilot</a>
+      <span class="sn-section">Service Desk</span>
+      <a href="/app/issue" class="sn">🎫 Support Tickets</a>
+      <a href="/app/project" class="sn">📋 Projects</a>
+      <a href="/app/task" class="sn">✅ Tasks</a>
+      <a href="/app/timesheet" class="sn">⏱️ Timesheets</a>
+      <a href="/app/lead" class="sn">🎯 CRM Leads</a>
+      <span class="sn-section">HR &amp; People</span>
+      <a href="/app/employee" class="sn">👤 Employees</a>
+      <a href="/app/leave-application" class="sn">🏖️ Leave Management</a>
+      <span class="sn-section">GST &amp; Finance</span>
+      <a href="/app/sales-invoice" class="sn">🧾 Sales Invoice</a>
+      <a href="/app/e-invoice-log" class="sn">📄 E-Invoice</a>
+      <span class="sn-section">Admin</span>
+      <a href="/admin-user-management" class="sn">⚙️ Admin Panel</a>
+      <a href="/app" class="sn">📋 ERP Desk</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-email" id="ud-email">Loading…</div>
+      <div class="user-company" id="ud-company">Service Portal</div>
+    </div>
+  </aside>
+  <main class="main">
+    <div class="hero">
+      <div class="hero-left">
+        <div class="eyebrow">Service Workspace</div>
+        <h1 id="ud-title">Welcome to your Dashboard</h1>
+        <p id="ud-sub">Tickets, projects, timesheets, HR and GST-compliant service invoicing in one place.</p>
+      </div>
+      <span class="hero-badge">🎧 SERVICE</span>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-val">🎫</div><div class="stat-lbl">Support</div></div>
+      <div class="stat-card"><div class="stat-val">📋</div><div class="stat-lbl">Projects</div></div>
+      <div class="stat-card"><div class="stat-val">⏱️</div><div class="stat-lbl">Timesheets</div></div>
+      <div class="stat-card"><div class="stat-val">🧾</div><div class="stat-lbl">Invoicing</div></div>
+    </div>
+    <div class="panel">
+      <div class="ph"><h2>Service Modules</h2><span class="ph-badge">8 Active</span></div>
+      <div class="mod-grid">
+        <div class="mod-card" style="border-top:3px solid #dc2626" onclick="go('/app/issue')">
+          <div class="mod-icon">🎫</div><div class="mod-name" style="color:#dc2626">Support Tickets</div>
+          <div class="mod-desc">Manage customer issues, escalations and SLA tracking.</div>
+          <a class="mod-link" href="/app/issue" style="color:#dc2626">Open →</a>
+        </div>
+        <div class="mod-card" style="border-top:3px solid #7c3aed" onclick="go('/app/project')">
+          <div class="mod-icon">📋</div><div class="mod-name" style="color:#7c3aed">Projects</div>
+          <div class="mod-desc">Plan, track and manage client projects and tasks with Gantt view.</div>
+          <a class="mod-link" href="/app/project" style="color:#7c3aed">Open →</a>
+        </div>
+        <div class="mod-card" style="border-top:3px solid #0ea5e9" onclick="go('/app/timesheet')">
+          <div class="mod-icon">⏱️</div><div class="mod-name" style="color:#0ea5e9">Timesheets</div>
+          <div class="mod-desc">Log billable hours and generate service invoices automatically.</div>
+          <a class="mod-link" href="/app/timesheet" style="color:#0ea5e9">Open →</a>
+        </div>
+        <div class="mod-card" style="border-top:3px solid #0f766e" onclick="go('/app/sales-invoice')">
+          <div class="mod-icon">🧾</div><div class="mod-name" style="color:#0f766e">Service Invoice</div>
+          <div class="mod-desc">GST-compliant service invoicing with e-invoice support.</div>
+          <a class="mod-link" href="/app/sales-invoice" style="color:#0f766e">Open →</a>
+        </div>
+        <div class="mod-card" style="border-top:3px solid #ea580c" onclick="go('/app/lead')">
+          <div class="mod-icon">🎯</div><div class="mod-name" style="color:#ea580c">CRM</div>
+          <div class="mod-desc">Leads, opportunities, and client relationship management.</div>
+          <a class="mod-link" href="/app/lead" style="color:#ea580c">Open →</a>
+        </div>
+        <div class="mod-card" style="border-top:3px solid #0369a1" onclick="go('/app/employee')">
+          <div class="mod-icon">👤</div><div class="mod-name" style="color:#0369a1">HR Management</div>
+          <div class="mod-desc">Employee records, leave management, and payroll integration.</div>
+          <a class="mod-link" href="/app/employee" style="color:#0369a1">Open →</a>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ph"><h2>Quick Actions</h2></div>
+      <div class="qa-grid">
+        <div class="qa-card"><h3>🎫 New Ticket</h3><p>Create a support ticket for a customer issue.</p><a href="/app/issue/new-issue-1" class="qa-btn">New Ticket</a></div>
+        <div class="qa-card"><h3>📋 New Project</h3><p>Start a client project and assign tasks to your team.</p><a href="/app/project/new-project-1" class="qa-btn">Create Project</a></div>
+        <div class="qa-card"><h3>⚡ Service Invoice</h3><p>Generate a GST-compliant invoice for a service rendered.</p><a href="/smart-billing" class="qa-btn">Create Invoice</a></div>
+        <div class="qa-card"><h3>🤖 GST Copilot</h3><p>AI help for service GST, TDS, and SAC code queries.</p><a href="/gst-copilot" class="qa-btn">Ask Copilot</a></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ph"><h2>🇮🇳 GST Tools</h2></div>
+      <div class="gst-strip">
+        <a href="/gst-copilot" class="gst-chip">🤖 GST Copilot</a>
+        <a href="/app/e-invoice-log" class="gst-chip">📄 E-Invoice</a>
+        <a href="/app/gst-settings" class="gst-chip">⚙️ GST Settings</a>
+        <a href="/app/gstr-1-log" class="gst-chip">📋 GSTR-1</a>
+        <a href="/smart-billing" class="gst-chip">⚡ Smart Billing</a>
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+function go(u){window.location.href=u}
+(async()=>{
+  try{const r=await fetch('/api/method/india_compliance.gst_india.api.portal_management.get_user_dashboard_page');const d=(await r.json()).message||{};
+    if(d.company_name){document.getElementById('ud-title').textContent=d.company_name;document.getElementById('ud-company').textContent=d.company_name;}
+    if(d.industry_type&&d.industry_type!=='Service'){window.location.href=d.dashboard_url||'/user-portal';}
+  }catch(e){}
+  try{const r2=await fetch('/api/method/frappe.auth.get_logged_user');const u=(await r2.json()).message;if(u)document.getElementById('ud-email').textContent=u;}catch(e){}
+})();
+</script>
+</body>
+</html>

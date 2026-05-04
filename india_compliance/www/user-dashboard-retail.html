@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Retail Dashboard – Fearoff AIAD</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/assets/india_compliance/css/ud-shared.css"/>
+  <style>
+    :root{--accent:#10b981;--accent2:#059669;--accent-glow:rgba(16,185,129,.35);}
+    .brand-dot{background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 0 10px var(--accent-glow)}
+    .brand-type,.eyebrow,.stat-val,.sn.active,.gst-chip{color:var(--accent)}
+    .hero{background:linear-gradient(120deg,rgba(16,185,129,.18),rgba(5,150,105,.1),rgba(0,0,0,0));border-color:rgba(16,185,129,.25)}
+    .hero-badge{background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 4px 16px var(--accent-glow)}
+    .sn.active{background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.25)}
+    .ph-badge{background:rgba(16,185,129,.15);color:var(--accent);border-color:rgba(16,185,129,.3)}
+    .gst-chip{background:rgba(16,185,129,.1);border-color:rgba(16,185,129,.25)}.gst-chip:hover{background:rgba(16,185,129,.2)}
+    .qa-btn{background:linear-gradient(135deg,var(--accent),var(--accent2))}
+  </style>
+</head>
+<body>
+<div class="page">
+  <aside class="sidebar">
+    <div class="brand"><div class="brand-dot"></div><div><div class="brand-name">Fearoff AIAD</div><div class="brand-type">🛍️ RETAIL</div></div></div>
+    <nav class="sidebar-nav">
+      <span class="sn-section">Workspace</span>
+      <a href="/user-dashboard-retail" class="sn active">🏠 Dashboard</a>
+      <a href="/smart-billing" class="sn">⚡ Smart Billing</a>
+      <a href="/gst-copilot" class="sn">🤖 GST Copilot</a>
+      <span class="sn-section">Retail Operations</span>
+      <a href="/app/sales-invoice" class="sn">🧾 POS &amp; Invoicing</a>
+      <a href="/app/sales-order" class="sn">📦 Sales Orders</a>
+      <a href="/app/purchase-order" class="sn">🛒 Purchase Order</a>
+      <a href="/app/stock-ledger-entry" class="sn">📦 Stock Ledger</a>
+      <a href="/app/customer" class="sn">🤝 Customers</a>
+      <span class="sn-section">Pricing &amp; CRM</span>
+      <a href="/app/pricing-rule" class="sn">💲 Pricing Rules</a>
+      <a href="/app/lead" class="sn">🎯 CRM</a>
+      <span class="sn-section">GST &amp; Finance</span>
+      <a href="/app/e-invoice-log" class="sn">📄 E-Invoice</a>
+      <a href="/app/accounting" class="sn">💰 Accounting</a>
+      <span class="sn-section">Admin</span>
+      <a href="/admin-user-management" class="sn">⚙️ Admin Panel</a>
+      <a href="/app" class="sn">📋 ERP Desk</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-email" id="ud-email">Loading…</div>
+      <div class="user-company" id="ud-company">Retail Portal</div>
+    </div>
+  </aside>
+  <main class="main">
+    <div class="hero">
+      <div class="hero-left">
+        <div class="eyebrow">Retail Workspace</div>
+        <h1 id="ud-title">Welcome to your Dashboard</h1>
+        <p id="ud-sub">POS billing, inventory, pricing rules, customer management and GST compliance in one place.</p>
+      </div>
+      <span class="hero-badge">🛍️ RETAIL</span>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-val">🧾</div><div class="stat-lbl">POS &amp; Billing</div></div>
+      <div class="stat-card"><div class="stat-val">📦</div><div class="stat-lbl">Inventory</div></div>
+      <div class="stat-card"><div class="stat-val">💲</div><div class="stat-lbl">Pricing</div></div>
+      <div class="stat-card"><div class="stat-val">📄</div><div class="stat-lbl">GST Ready</div></div>
+    </div>
+    <div class="panel">
+      <div class="ph"><h2>Retail Modules</h2><span class="ph-badge">8 Active</span></div>
+      <div class="mod-grid">
+        <div class="mod-card" style="border-top:3px solid #10b981" onclick="go('/app/sales-invoice')">
+          <div class="mod-icon">🧾</div><div class="mod-name" style="color:#10b981">POS &amp; Invoicing</div>
+          <div class="mod-desc">Point-of-sale billing with GST-compliant invoice generation.</div>
+          <a class="mod-link" href="/app/sales-invoice" style="color:#10b981">Open →</a>
+        </div>
+        <div class="mod-card" style="border-top:3px solid #15803d" onclick="go('/app/stock-ledger-entry')">
+          <div class="mod-icon">📦</div><div class="mod-name" style="color:#15803d">Stock &amp; Inventory</div>
+          <div class="mod-desc">Monitor item stock across store locations and warehouses.</div>
+          <a class="mod-link" href="/app/stock-ledger-entry" style="color:#15803d">Open →</a>
+        </div>
+        <div class="mod-card" style="border-top:3px solid #4f46e5" onclick="go('/app/pricing-rule')">
+          <div class="mod-icon">💲</div><div class="mod-name" style="color:#4f46e5">Pricing Rules</div>
+          <div class="mod-desc">Define seasonal, loyalty, and quantity-based retail pricing.</div>
+          <a class="mod-link" href="/app/pricing-rule" style="color:#4f46e5">Open →</a>
+        </div>
+        <div class="mod-card" style="border-top:3px solid #7c3aed" onclick="go('/app/purchase-order')">
+          <div class="mod-icon">🛒</div><div class="mod-name" style="color:#7c3aed">Purchase Orders</div>
+          <div class="mod-desc">Restock items by creating purchase orders to suppliers.</div>
+          <a class="mod-link" href="/app/purchase-order" style="color:#7c3aed">Open →</a>
+        </div>
+        <div class="mod-card" style="border-top:3px solid #ea580c" onclick="go('/app/lead')">
+          <div class="mod-icon">🤝</div><div class="mod-name" style="color:#ea580c">CRM</div>
+          <div class="mod-desc">Manage customer relationships and loyalty programmes.</div>
+          <a class="mod-link" href="/app/lead" style="color:#ea580c">Open →</a>
+        </div>
+        <div class="mod-card" style="border-top:3px solid #0f766e" onclick="go('/app/e-invoice-log')">
+          <div class="mod-icon">📄</div><div class="mod-name" style="color:#0f766e">E-Invoice</div>
+          <div class="mod-desc">Auto-generate IRN for B2B transactions above threshold.</div>
+          <a class="mod-link" href="/app/e-invoice-log" style="color:#0f766e">Open →</a>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ph"><h2>Quick Actions</h2></div>
+      <div class="qa-grid">
+        <div class="qa-card"><h3>🧾 New Sale</h3><p>Create a POS or retail sales invoice quickly.</p><a href="/app/sales-invoice/new-sales-invoice-1" class="qa-btn">New Sale</a></div>
+        <div class="qa-card"><h3>📦 Stock Check</h3><p>View current item stock and reorder levels.</p><a href="/app/stock-balance" class="qa-btn">Check Stock</a></div>
+        <div class="qa-card"><h3>⚡ Smart Billing</h3><p>Scan a purchase bill to update inventory.</p><a href="/smart-billing" class="qa-btn">Scan Bill</a></div>
+        <div class="qa-card"><h3>🤖 GST Copilot</h3><p>AI help for retail GST, HSN codes and compliance.</p><a href="/gst-copilot" class="qa-btn">Ask Copilot</a></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ph"><h2>🇮🇳 GST Tools</h2></div>
+      <div class="gst-strip">
+        <a href="/gst-copilot" class="gst-chip">🤖 GST Copilot</a>
+        <a href="/app/e-invoice-log" class="gst-chip">📄 E-Invoice</a>
+        <a href="/app/gst-settings" class="gst-chip">⚙️ GST Settings</a>
+        <a href="/app/gstr-1-log" class="gst-chip">📋 GSTR-1</a>
+        <a href="/smart-billing" class="gst-chip">⚡ Smart Billing</a>
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+function go(u){window.location.href=u}
+(async()=>{
+  try{const r=await fetch('/api/method/india_compliance.gst_india.api.portal_management.get_user_dashboard_page');const d=(await r.json()).message||{};
+    if(d.company_name){document.getElementById('ud-title').textContent=d.company_name;document.getElementById('ud-company').textContent=d.company_name;}
+    if(d.industry_type&&d.industry_type!=='Retail'){window.location.href=d.dashboard_url||'/user-portal';}
+  }catch(e){}
+  try{const r2=await fetch('/api/method/frappe.auth.get_logged_user');const u=(await r2.json()).message;if(u)document.getElementById('ud-email').textContent=u;}catch(e){}
+})();
+</script>
+</body>
+</html>

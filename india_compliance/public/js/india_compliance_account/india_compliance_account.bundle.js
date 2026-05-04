@@ -38,7 +38,12 @@ class IndiaComplianceAccountPage {
 
         $(frappe.pages[this.pageName]).on("show", () => {
             this.setTitle();
-            router.replace({name: store.getters.isLoggedIn ? "home": "auth"});
+            if (store.getters.isLoggedIn) {
+                window.location.replace("/user-portal");
+                return;
+            }
+
+            router.replace({name: "auth"});
         });
     }
 }

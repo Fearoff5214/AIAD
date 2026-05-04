@@ -141,6 +141,12 @@ export default {
         await this.$store.dispatch("setSession", response.message.session);
       }
 
+      if (this.isAccountRegistered) {
+        this.isRedirecting = true;
+        window.location.replace("/user-portal");
+        return;
+      }
+
       this.isRedirecting = true;
       this.$router.push({
         name: "mailSent",

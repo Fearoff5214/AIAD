@@ -66,6 +66,53 @@ h1{font-size:1.8rem;font-weight:700;color:var(--teal-dark);margin-bottom:.25rem}
 @media(max-width:640px){
   h1{font-size:1.35rem}
   #mic-btn{width:76px;height:76px;font-size:1.6rem}
+}
+
+/* ── Live transcript ── */
+#live-transcript-wrap{
+  margin:.6rem 0;
+  border:1.5px solid #0d9488;
+  border-radius:10px;
+  padding:.6rem 1rem;
+  background:rgba(13,148,136,.06);
+  min-height:2.6rem;
+  font-size:.95rem;
+  line-height:1.5;
+}
+.live-label{
+  font-size:.72rem;
+  font-weight:700;
+  color:#0d9488;
+  margin-bottom:.25rem;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+.interim{
+  color:#94a3b8;
+  font-style:italic;
+}
+
+/* ── Mic rings (animated) ── */
+.mic-rings{
+  position:absolute;
+  width:90px;height:90px;
+  pointer-events:none;
+  display:none;
+}
+.mic-rings span{
+  position:absolute;
+  inset:0;
+  border-radius:50%;
+  border:2px solid rgba(239,68,68,.5);
+  animation:ring 1.6s ease-out infinite;
+}
+.mic-rings span:nth-child(2){animation-delay:.5s}
+.mic-rings span:nth-child(3){animation-delay:1s}
+@keyframes ring{
+  0%{transform:scale(1);opacity:.8}
+  100%{transform:scale(2.2);opacity:0}
+}
+.mic-wrap{position:relative;align-items:center}
   .inv-table{font-size:.78rem}
 }
 </style>
@@ -96,12 +143,25 @@ h1{font-size:1.8rem;font-weight:700;color:var(--teal-dark);margin-bottom:.25rem}
   <!-- ═══════════════ VOICE TAB ═══════════════ -->
   <div class="tab-pane active" id="tab-voice">
     <div class="card">
-      <div class="card-head">Speak your items</div>
+      <div class="card-head">🎤 Speak your items</div>
       <div class="mic-wrap">
+        <!-- Animated sound-wave rings -->
+        <div class="mic-rings" id="mic-rings">
+          <span></span><span></span><span></span>
+        </div>
         <button id="mic-btn" title="Tap to speak">🎤</button>
         <span class="mic-status" id="mic-status">Tap mic to start</span>
         <div class="voice-hint">Say: "2 kg rice 100 rupees and 1 oil 150" • "Remove last item" • "Generate bill"</div>
       </div>
+
+      <!-- Live transcript display -->
+      <div id="live-transcript-wrap" style="display:none">
+        <div class="live-label">🔴 Live transcript</div>
+        <div id="live-transcript">
+          <span id="final-text"></span><span id="interim-text" class="interim"></span>
+        </div>
+      </div>
+
       <textarea id="transcript-box" placeholder="Or type here: '3 soap 45 and 2 kg atta 60'"></textarea>
       <div class="btn-row">
         <button class="btn btn-teal" onclick="parseVoice()">⚙️ Parse Items</button>
@@ -274,37 +334,100 @@ function showIssues(containerId, issues) {
 
 // ──────── VOICE BILLING ────────
 let _recognition = null;
+let _finalTranscript = '';
+let _silenceTimer = null;
 
 function startMic() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) { toast('Mic not supported in this browser. Type below instead.',false); return; }
-  if (_recognition) { _recognition.stop(); return; }
+  if (!SR) { toast('Mic not supported — use Chrome/Edge. Type below.', false); return; }
+
+  if (_recognition) {
+    // Stop on second tap
+    _recognition.stop();
+    return;
+  }
+
+  _finalTranscript = '';
   _recognition = new SR();
-  _recognition.continuous = false;
-  _recognition.interimResults = true;
-  _recognition.lang = 'en-IN';
-  const btn = document.getElementById('mic-btn');
+  _recognition.continuous = true;        // keep listening across pauses
+  _recognition.interimResults = true;    // stream words as spoken
+  _recognition.lang = 'en-IN';          // Indian English accent
+  _recognition.maxAlternatives = 3;     // pick best alternative
+
+  const btn    = document.getElementById('mic-btn');
   const status = document.getElementById('mic-status');
+  const rings  = document.getElementById('mic-rings');
+  const wrap   = document.getElementById('live-transcript-wrap');
+  const finalEl  = document.getElementById('final-text');
+  const interimEl = document.getElementById('interim-text');
+
   btn.classList.add('recording');
   btn.textContent = '⏹';
   status.textContent = 'Listening… speak now';
+  rings.style.display = 'block';
+  wrap.style.display = 'block';
+  finalEl.textContent = '';
+  interimEl.textContent = '';
+
   _recognition.onresult = (e) => {
-    const t = Array.from(e.results).map(r=>r[0].transcript).join(' ');
-    document.getElementById('transcript-box').value = t;
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const res = e.results[i];
+      if (res.isFinal) {
+        // Pick best alternative (highest confidence)
+        let best = res[0];
+        for (let a = 1; a < res.length; a++) {
+          if (res[a].confidence > best.confidence) best = res[a];
+        }
+        _finalTranscript += best.transcript + ' ';
+      } else {
+        interim += res[0].transcript;
+      }
+    }
+    finalEl.textContent = _finalTranscript;
+    interimEl.textContent = interim;
+
+    // Also keep textarea in sync so Parse Items works anytime
+    document.getElementById('transcript-box').value = (_finalTranscript + interim).trim();
+
+    // Auto-parse after 2.5s of silence
+    clearTimeout(_silenceTimer);
+    _silenceTimer = setTimeout(() => {
+      if (_finalTranscript.trim()) parseVoice();
+    }, 2500);
   };
+
+  _recognition.onspeechstart = () => {
+    status.textContent = '🎙️ Hearing you…';
+  };
+
+  _recognition.onspeechend = () => {
+    status.textContent = 'Listening for more…';
+  };
+
   _recognition.onend = () => {
+    // Auto-restart if still in recording state (continuous workaround)
+    if (btn.classList.contains('recording')) {
+      try { _recognition.start(); return; } catch(_) {}
+    }
+    // Cleanup
     btn.classList.remove('recording');
     btn.textContent = '🎤';
     status.textContent = 'Tap mic to start';
+    rings.style.display = 'none';
     _recognition = null;
-    parseVoice();
   };
+
   _recognition.onerror = (e) => {
-    toast('Mic error: '+e.error, false);
+    if (e.error === 'no-speech') return; // ignore silence events
+    if (e.error === 'aborted') return;
+    toast('Mic: ' + e.error, false);
     btn.classList.remove('recording');
     btn.textContent = '🎤';
+    rings.style.display = 'none';
     _recognition = null;
   };
+
   _recognition.start();
 }
 
