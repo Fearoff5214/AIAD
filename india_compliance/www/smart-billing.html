@@ -140,6 +140,16 @@ h1{font-size:1.8rem;font-weight:700;color:var(--teal-dark);margin-bottom:.25rem}
     <button class="tab-btn" onclick="switchTab('ocr',this)">📷 Scan Bill</button>
   </div>
 
+  <!-- Supply type selector -->
+  <div style="display:flex;align-items:center;gap:.8rem;margin-bottom:1rem;flex-wrap:wrap">
+    <label style="font-size:.82rem;font-weight:700;color:var(--muted)">SUPPLY TYPE:</label>
+    <select id="supply-type" style="border:1px solid var(--line);border-radius:8px;padding:.35rem .75rem;font-size:.85rem;font-family:inherit;background:var(--soft);color:var(--ink);cursor:pointer">
+      <option value="intra">🏠 Intra-State (CGST + SGST)</option>
+      <option value="inter">✈️ Inter-State (IGST)</option>
+    </select>
+    <span style="font-size:.78rem;color:var(--muted)">Sets correct tax split on invoice</span>
+  </div>
+
   <!-- ═══════════════ VOICE TAB ═══════════════ -->
   <div class="tab-pane active" id="tab-voice">
     <div class="card">
@@ -182,6 +192,12 @@ h1{font-size:1.8rem;font-weight:700;color:var(--teal-dark);margin-bottom:.25rem}
         <button class="btn btn-ghost" onclick="addVoiceRow()">+ Add Row</button>
         <button class="btn btn-red" onclick="clearVoice()">🗑 Discard</button>
       </div>
+    </div>
+
+    <!-- Compliance Score Panel -->
+    <div class="card" id="voice-compliance" style="display:none">
+      <div class="card-head">🛡️ GST Compliance Check</div>
+      <div id="voice-compliance-body"></div>
     </div>
   </div>
 
@@ -292,12 +308,23 @@ function recalcTotals(table) {
   renderTotals(totId, sub, gstAmt);
 }
 
-function renderTotals(containerId, sub, gstAmt) {
+function renderTotals(containerId, sub, gstAmt, cgst, sgst, igst) {
   const el = document.getElementById(containerId);
+  const isInter = (document.getElementById('supply-type')?.value || 'intra') === 'inter';
+  let taxLine = '';
+  if (isInter && igst !== undefined) {
+    taxLine = `<span class="tot-chip">IGST: ₹${(igst||gstAmt).toFixed(2)}</span>`;
+  } else {
+    const c = cgst !== undefined ? cgst : gstAmt/2;
+    const s = sgst !== undefined ? sgst : gstAmt - c;
+    taxLine = `<span class="tot-chip">CGST: ₹${c.toFixed(2)}</span>
+               <span class="tot-chip">SGST: ₹${s.toFixed(2)}</span>`;
+  }
   el.innerHTML = `
     <span class="tot-chip">Subtotal: ₹${sub.toFixed(2)}</span>
-    <span class="tot-chip">GST: ₹${gstAmt.toFixed(2)}</span>
-    <span class="tot-chip grand">Total: ₹${(sub+gstAmt).toFixed(2)}</span>`;
+    ${taxLine}
+    <span class="tot-chip">Total GST: ₹${gstAmt.toFixed(2)}</span>
+    <span class="tot-chip grand">Grand Total: ₹${(sub+gstAmt).toFixed(2)}</span>`;
 }
 
 function deleteRow(btn, tbodyId) {
@@ -444,6 +471,7 @@ async function parseVoice() {
 
   const items = data.items || [];
   const conf = data.confidence || 'low';
+  const inv = data.invoice || {};
   const headEl = document.getElementById('voice-result-head');
   headEl.innerHTML = `Parsed Items <span class="conf-badge conf-${conf}">${conf.toUpperCase()} confidence</span>`;
 
@@ -451,10 +479,12 @@ async function parseVoice() {
   tbody.innerHTML = '';
   items.forEach((item, i) => tbody.appendChild(buildItemRow(item, i, 'voice-tbody')));
 
-  const inv = data.invoice || {};
-  renderTotals('voice-totals', inv.subtotal||0, inv.total_gst||0);
+  renderTotals('voice-totals', inv.subtotal||0, inv.total_gst||0, inv.cgst, inv.sgst, inv.igst);
   showIssues('voice-issues', data.validation?.errors||[]);
   document.getElementById('voice-result-card').style.display = 'block';
+
+  // Run compliance validator
+  runComplianceCheck(inv, 'voice-compliance');
 }
 
 function handleVoiceCommand(cmd) {
@@ -475,10 +505,46 @@ function handleVoiceCommand(cmd) {
 async function confirmVoiceInvoice() {
   const items = getRowsAsItems('voice-tbody');
   if (!items.length) { toast('No items to save', false); return; }
-  const invoice = { items, source:'voice_billing', date: new Date().toISOString().split('T')[0] };
+  const supplyType = document.getElementById('supply-type')?.value || 'intra';
+  const invoice = { items, source:'voice_billing', date: new Date().toISOString().split('T')[0], supply_type: supplyType };
   const resp = await callAPI('voice_billing.confirm_voice_invoice', { invoice_json: JSON.stringify(invoice) });
   if (resp.message?.success) { toast('Invoice saved!'); clearVoice(); }
   else toast(resp.message?.error||'Save failed', false);
+}
+
+async function runComplianceCheck(invoice, panelId) {
+  const panel = document.getElementById(panelId);
+  const body = document.getElementById(panelId + '-body');
+  if (!panel || !body || !invoice) return;
+  panel.style.display = 'block';
+  body.innerHTML = '<em style="color:var(--muted);font-size:.85rem">Checking compliance…</em>';
+  try {
+    const supplyType = document.getElementById('supply-type')?.value || 'intra';
+    const resp = await callAPI('voice_billing.validate_gst_invoice', {
+      invoice_json: JSON.stringify(invoice),
+      supply_type: supplyType
+    });
+    const r = resp.message || {};
+    if (!r.success) { body.innerHTML = '<em>Validation error</em>'; return; }
+    const gradeColor = {A:'#16a34a',B:'#d97706',C:'#ea580c',F:'#dc2626'}[r.grade] || '#6b7280';
+    let html = `<div style="display:flex;align-items:center;gap:1rem;margin-bottom:.8rem;flex-wrap:wrap">
+      <div style="font-size:2.5rem;font-weight:800;color:${gradeColor}">${r.grade}</div>
+      <div>
+        <div style="font-weight:700;font-size:1rem;color:${gradeColor}">Score: ${r.compliance_score}/100</div>
+        <div style="font-size:.8rem;color:var(--muted)">${r.summary}</div>
+      </div>
+    </div>`;
+    if (r.issues?.length) {
+      html += `<div class="issue-box"><strong>❌ Issues (fix before filing):</strong><ul>${r.issues.map(i=>`<li class="issue-item">${i}</li>`).join('')}</ul></div>`;
+    }
+    if (r.warnings?.length) {
+      html += `<div class="issue-box" style="background:#fffbeb;border-color:#fde68a;color:#92400e"><strong>⚠️ Warnings:</strong><ul>${r.warnings.map(w=>`<li class="issue-item">${w}</li>`).join('')}</ul></div>`;
+    }
+    if (!r.issues?.length && !r.warnings?.length) {
+      html += `<div style="color:var(--green);font-weight:600;font-size:.9rem">✅ No compliance issues found!</div>`;
+    }
+    body.innerHTML = html;
+  } catch(e) { body.innerHTML = '<em>Could not run compliance check</em>'; }
 }
 
 function addVoiceRow() { addBlankRow('voice-tbody'); }

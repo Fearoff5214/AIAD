@@ -12,3 +12,8 @@ india_compliance/docs/current
 # JS
 dist/
 node_modules
+
+indiaCompliance/public/css/css
+indiaCompliance/public/js/js
+india_compliance/public/css/css
+india_compliance/public/js/js

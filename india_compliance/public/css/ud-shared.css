@@ -13,9 +13,16 @@ body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#0d1117 0%
 .sn{display:block;text-decoration:none;color:#64748b;padding:.6rem .85rem;border-radius:9px;font-size:.85rem;font-weight:500;transition:all .2s}
 .sn:hover{background:rgba(255,255,255,.06);color:#e2e8f0}
 .sn-section{font-size:.68rem;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.08em;padding:.7rem .85rem .3rem;margin-top:.5rem}
+
+/* Sidebar Footer – user info + logout */
 .sidebar-footer{margin-top:auto;padding-top:1rem;border-top:1px solid rgba(255,255,255,.09)}
 .user-email{color:#e2e8f0;font-weight:600;font-size:.82rem;margin-bottom:.2rem;word-break:break-all}
-.user-company{font-size:.78rem;color:#64748b}
+.user-company{font-size:.78rem;color:#64748b;margin-bottom:.7rem}
+.logout-btn{display:flex;align-items:center;gap:.45rem;width:100%;padding:.55rem .85rem;border:1px solid rgba(239,68,68,.3);border-radius:9px;background:rgba(239,68,68,.07);color:#fca5a5;font-family:inherit;font-size:.82rem;font-weight:600;cursor:pointer;transition:all .2s;text-decoration:none}
+.logout-btn:hover{background:rgba(239,68,68,.18);color:#fff;border-color:rgba(239,68,68,.5)}
+.user-role-badge{display:inline-block;font-size:.65rem;font-weight:700;padding:.15rem .5rem;border-radius:999px;letter-spacing:.06em;margin-bottom:.5rem}
+.role-admin{background:rgba(220,38,38,.2);color:#fca5a5;border:1px solid rgba(220,38,38,.4)}
+.role-user{background:rgba(45,212,191,.12);color:#2dd4bf;border:1px solid rgba(45,212,191,.25)}
 
 /* Main */
 .main{padding:2rem;display:flex;flex-direction:column;gap:1.6rem;overflow:auto}

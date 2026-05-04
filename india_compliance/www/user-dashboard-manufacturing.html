@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Manufacturing Dashboard – Fearoff AIAD</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="/assets/india_compliance/www/ud-shared.css"/>
+  <link rel="stylesheet" href="/assets/india_compliance/css/ud-shared.css"/>
   <style>
     :root{--accent:#f97316;--accent2:#dc2626;--accent-glow:rgba(249,115,22,.35);}
     .type-label{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
@@ -50,8 +50,10 @@
       <a href="/app" class="sn">📋 ERP Desk</a>
     </nav>
     <div class="sidebar-footer">
+      <div class="user-role-badge role-user" id="ud-role-badge">USER</div>
       <div class="user-email" id="ud-email">Loading…</div>
       <div class="user-company" id="ud-company">Manufacturing Portal</div>
+      <button class="logout-btn" onclick="doLogout()">🚪 Logout</button>
     </div>
   </aside>
   <main class="main">
@@ -128,12 +130,37 @@
 </div>
 <script>
 function go(u){window.location.href=u}
-(async()=>{
-  try{const r=await fetch('/api/method/india_compliance.gst_india.api.portal_management.get_user_dashboard_page');const d=(await r.json()).message||{};
-    if(d.company_name){document.getElementById('ud-title').textContent=d.company_name;document.getElementById('ud-company').textContent=d.company_name;}
-    if(d.industry_type&&d.industry_type!=='Manufacturing'){window.location.href=d.dashboard_url||'/user-portal';}
-  }catch(e){}
-  try{const r2=await fetch('/api/method/frappe.auth.get_logged_user');const u=(await r2.json()).message;if(u)document.getElementById('ud-email').textContent=u;}catch(e){}
+
+async function doLogout() {
+  try {
+    await fetch('/api/method/india_compliance.gst_india.api.portal_management.portal_logout', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','X-Frappe-CSRF-Token': '{{ frappe.session.csrf_token }}','X-Requested-With':'XMLHttpRequest'},
+      body: JSON.stringify({})
+    });
+  } catch(e) {}
+  window.location.href = '/gst-login';
+}
+
+(async () => {
+  try {
+    const r = await fetch('/api/method/india_compliance.gst_india.api.portal_management.get_current_user_info');
+    const info = (await r.json()).message || {};
+    if (info.redirect_to_login) { window.location.href = '/gst-login'; return; }
+    if (info.email) document.getElementById('ud-email').textContent = info.email;
+    if (info.company_name) {
+      document.getElementById('ud-title').textContent = info.company_name;
+      document.getElementById('ud-company').textContent = info.company_name;
+    }
+    if (info.is_admin) {
+      document.getElementById('ud-role-badge').textContent = 'ADMIN';
+      document.getElementById('ud-role-badge').className = 'user-role-badge role-admin';
+    }
+    // If industry doesn't match this dashboard, redirect
+    if (info.industry_type && info.industry_type !== 'Manufacturing' && !info.is_admin) {
+      window.location.href = info.dashboard_url || '/gst-login';
+    }
+  } catch(e) {}
 })();
 </script>
 </body>

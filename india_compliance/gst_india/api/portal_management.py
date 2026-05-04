@@ -57,7 +57,7 @@ INDUSTRY_DASHBOARD_URLS = {
 
 
 def _ensure_system_manager():
-    if not frappe.has_permission("Portal Tenant", "write"):
+    if frappe.session.user == "Guest" or "System Manager" not in frappe.get_roles(frappe.session.user):
         frappe.throw(_("Only an administrator can perform this action"), frappe.PermissionError)
 
 
@@ -508,16 +508,121 @@ def track_usage(event_type, route=None, metadata_json=None):
 def list_portal_users(industry_type=None):
     _ensure_system_manager()
 
-    filters = {"is_active": 1}
+    filters = {}
     if industry_type:
         filters["industry_type"] = industry_type.strip().title()
 
     return frappe.get_all(
         "Portal Tenant",
-        fields=["name", "company_name", "industry_type", "user", "assigned_admin", "is_active"],
+        fields=["name", "company_name", "industry_type", "user", "assigned_admin", "is_active", "website_slug", "modified"],
         filters=filters,
         order_by="modified desc",
     )
+
+
+@frappe.whitelist()
+def get_tenant_detail(tenant_name):
+    """Return full detail of a single Portal Tenant for the admin edit form."""
+    _ensure_system_manager()
+
+    if not frappe.db.exists("Portal Tenant", tenant_name):
+        frappe.throw(_("Portal Tenant not found"))
+
+    tenant = frappe.get_doc("Portal Tenant", tenant_name)
+    return {
+        "name": tenant.name,
+        "company_name": tenant.company_name,
+        "industry_type": tenant.industry_type,
+        "user": tenant.user,
+        "assigned_admin": tenant.assigned_admin,
+        "website_slug": tenant.website_slug,
+        "is_active": tenant.is_active,
+        "enabled_features": json.loads(tenant.enabled_features_json or "[]"),
+        "dashboard_url": INDUSTRY_DASHBOARD_URLS.get(tenant.industry_type, "/user-portal"),
+    }
+
+
+@frappe.whitelist()
+def update_tenant(tenant_name, company_name=None, industry_type=None, is_active=None, assigned_admin=None, custom_features=None):
+    """
+    Admin: update any field on a Portal Tenant.
+    Changing industry_type auto-resets enabled_features to the default for that industry
+    unless custom_features is supplied (JSON list).
+    Changes are immediately reflected on the user's next page load.
+    """
+    _ensure_system_manager()
+
+    if not frappe.db.exists("Portal Tenant", tenant_name):
+        frappe.throw(_("Portal Tenant not found"))
+
+    tenant = frappe.get_doc("Portal Tenant", tenant_name)
+
+    if company_name is not None:
+        tenant.company_name = company_name.strip()
+
+    if industry_type is not None:
+        industry_type = industry_type.strip().title()
+        if industry_type not in TAILORED_FEATURES:
+            frappe.throw(_("Invalid industry type: {0}").format(industry_type))
+        tenant.industry_type = industry_type
+        # Reset features to defaults for new industry unless overridden
+        if custom_features is None:
+            tenant.enabled_features_json = _safe_json_dumps(TAILORED_FEATURES[industry_type])
+
+    if custom_features is not None:
+        try:
+            features_list = json.loads(custom_features) if isinstance(custom_features, str) else custom_features
+            tenant.enabled_features_json = _safe_json_dumps(features_list)
+        except Exception:
+            frappe.throw(_("custom_features must be a valid JSON list"))
+
+    if is_active is not None:
+        tenant.is_active = int(is_active)
+
+    if assigned_admin is not None:
+        if assigned_admin and not frappe.db.exists("User", assigned_admin):
+            frappe.throw(_("Admin user does not exist: {0}").format(assigned_admin))
+        tenant.assigned_admin = assigned_admin
+
+    tenant.save(ignore_permissions=True)
+
+    _log_usage(
+        frappe.session.user,
+        event_type="admin_update_tenant",
+        route="/api/method/india_compliance.gst_india.api.portal_management.update_tenant",
+        metadata={"tenant": tenant_name, "industry_type": tenant.industry_type},
+    )
+
+    return {
+        "message": _("Tenant updated successfully"),
+        "tenant": tenant.name,
+        "industry_type": tenant.industry_type,
+        "dashboard_url": INDUSTRY_DASHBOARD_URLS.get(tenant.industry_type, "/user-portal"),
+        "enabled_features": json.loads(tenant.enabled_features_json or "[]"),
+        "is_active": tenant.is_active,
+    }
+
+
+@frappe.whitelist()
+def deactivate_tenant(tenant_name):
+    """Admin: deactivate (soft-delete) a Portal Tenant."""
+    _ensure_system_manager()
+
+    if not frappe.db.exists("Portal Tenant", tenant_name):
+        frappe.throw(_("Portal Tenant not found"))
+
+    tenant = frappe.get_doc("Portal Tenant", tenant_name)
+    tenant.is_active = 0
+    tenant.save(ignore_permissions=True)
+
+    _log_usage(
+        frappe.session.user,
+        event_type="admin_deactivate_tenant",
+        route="/api/method/india_compliance.gst_india.api.portal_management.deactivate_tenant",
+        metadata={"tenant": tenant_name},
+    )
+
+    return {"message": _("Tenant deactivated"), "tenant": tenant_name}
 
 
 def ensure_create_account_nav_item():
@@ -723,3 +828,137 @@ def ensure_demo_portal_accounts():
         created.append({"email": account["email"], "tenant": tenant.name})
 
     return {"message": _("Demo portal accounts ensured"), "accounts": created}
+
+
+# ── Multi-Tenant Auth & Session APIs ─────────────────────────────────────────
+
+@frappe.whitelist(allow_guest=True)
+def get_current_user_info():
+    """
+    Returns structured info about the current session user:
+    - email, is_admin, company_name, industry_type, dashboard_url
+    - redirect_to_login=True if not authenticated
+    Used by all dashboards to populate the sidebar and enforce role separation.
+    """
+    user = frappe.session.user
+    if not user or user == "Guest":
+        return {"redirect_to_login": True}
+
+    is_admin = "System Manager" in frappe.get_roles(user)
+
+    # Try to find their tenant record
+    tenant_name = frappe.db.get_value("Portal Tenant", {"user": user, "is_active": 1}, "name")
+    company_name = None
+    industry_type = None
+    dashboard_url = "/gst-login"
+
+    if tenant_name:
+        tenant = frappe.get_doc("Portal Tenant", tenant_name)
+        company_name = tenant.company_name
+        industry_type = tenant.industry_type
+        dashboard_url = INDUSTRY_DASHBOARD_URLS.get(industry_type, "/user-portal")
+    elif is_admin:
+        dashboard_url = "/admin-user-management"
+
+    return {
+        "email": user,
+        "is_admin": is_admin,
+        "is_user": not is_admin,
+        "company_name": company_name or ("Administrator" if is_admin else user),
+        "industry_type": industry_type,
+        "dashboard_url": dashboard_url,
+        "redirect_to_login": False,
+    }
+
+
+@frappe.whitelist()
+def portal_logout():
+    """
+    Logs out the current user and clears the Frappe session.
+    POST /api/method/india_compliance.gst_india.api.portal_management.portal_logout
+    """
+    user = frappe.session.user
+    if user and user != "Guest":
+        try:
+            _log_usage(user, "logout", route="/gst-login")
+        except Exception:
+            pass
+    frappe.local.login_manager.logout()
+    return {"success": True, "message": "Logged out successfully"}
+
+
+@frappe.whitelist()
+def admin_get_activity_log(limit=50, user_filter=None):
+    """
+    Admin-only: returns recent portal usage activity across all tenants.
+    Includes login, logout, page view events with user + tenant info.
+    """
+    _ensure_system_manager()
+    limit = min(int(limit or 50), 200)
+
+    filters = {}
+    if user_filter:
+        filters["user"] = user_filter
+
+    try:
+        logs = frappe.db.get_all(
+            "Portal Usage Log",
+            filters=filters,
+            fields=["user", "portal_tenant", "event_type", "route", "creation"],
+            order_by="creation desc",
+            limit=limit,
+        )
+    except Exception:
+        logs = []
+
+    # Enrich with tenant company name
+    enriched = []
+    for log in logs:
+        company = None
+        if log.get("portal_tenant"):
+            company = frappe.db.get_value("Portal Tenant", log["portal_tenant"], "company_name")
+        enriched.append({
+            "user": log.get("user"),
+            "company": company or log.get("portal_tenant", "—"),
+            "event": log.get("event_type"),
+            "route": log.get("route"),
+            "time": str(log.get("creation", "")),
+        })
+
+    return {"logs": enriched, "total": len(enriched)}
+
+
+@frappe.whitelist()
+def admin_get_active_sessions():
+    """
+    Admin-only: returns currently active Frappe sessions (non-Guest users).
+    Shows who is currently logged in to the platform.
+    """
+    _ensure_system_manager()
+    try:
+        sessions = frappe.db.sql("""
+            SELECT s.user, s.lastupdate, u.full_name,
+                   pt.company_name, pt.industry_type
+            FROM `tabSessions` s
+            LEFT JOIN `tabUser` u ON u.name = s.user
+            LEFT JOIN `tabPortal Tenant` pt ON pt.user = s.user AND pt.is_active = 1
+            WHERE s.user != 'Guest'
+            ORDER BY s.lastupdate DESC
+            LIMIT 50
+        """, as_dict=True)
+    except Exception:
+        sessions = []
+
+    result = []
+    for s in sessions:
+        roles = frappe.get_roles(s.get("user", ""))
+        result.append({
+            "user": s.get("user"),
+            "full_name": s.get("full_name") or s.get("user"),
+            "company": s.get("company_name") or "—",
+            "industry": s.get("industry_type") or ("Admin" if "System Manager" in roles else "—"),
+            "last_seen": str(s.get("lastupdate", "")),
+            "is_admin": "System Manager" in roles,
+        })
+
+    return {"sessions": result, "count": len(result)}

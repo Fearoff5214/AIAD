@@ -136,3 +136,57 @@
 - Missing e-invoice generation when mandatory.
 - Not reconciling GSTR-2B with purchase register before filing GSTR-3B.
 - Filing returns late — attracts interest and late fees.
+
+## GSTR-1 Filing Details
+- GSTR-1 must be filed by the 11th of the following month for monthly filers.
+- QRMP scheme filers: IFF (Invoice Furnishing Facility) by 13th for months 1 and 2; GSTR-1 quarterly by 13th after quarter end.
+- B2B invoices (supply to registered persons): report invoice-wise in Table 4A/4B.
+- B2C large invoices (above ₹2.5 lakh, inter-state): report invoice-wise in Table 5.
+- B2C small (below ₹2.5 lakh or intra-state): report aggregate state-wise in Table 7.
+- Exports: Table 6A (with payment of tax), Table 6B (without payment of tax).
+- Nil-rated, exempt, non-GST supplies: Table 8.
+- Amendments in subsequent month: Table 9A (invoices), 9B (credit/debit notes), 9C (B2C amendments).
+- HSN summary: mandatory in Table 12 with quantity and taxable value for each HSN code.
+
+## RCM (Reverse Charge Mechanism) Rules
+- RCM applies when the purchaser is liable to pay GST instead of the supplier.
+- Mandatory RCM categories: legal services by advocates, GTA (Goods Transport Agency), security services, import of services, purchase from unregistered dealers for certain categories.
+- Self-invoice must be issued by recipient for RCM purchases.
+- ITC on RCM: recipient can claim ITC after paying RCM tax in GSTR-3B.
+- RCM liability reported in GSTR-3B Table 3.1(d).
+- Cash ledger must have sufficient balance for RCM payment; cannot be offset from ITC credit for RCM payment.
+
+## E-Invoice Validation Checklist
+- Supplier GSTIN: 15-character alphanumeric (format: 2-digit state + 10-char PAN + 1-char entity + Z + 1-char check).
+- Valid invoice serial number: unique within financial year, max 16 characters, alphanumeric with /-, no special characters.
+- Place of supply: 2-digit state code matching buyer's state.
+- HSN code: 4-digit (turnover <₹5cr), 6-digit (turnover >₹5cr).
+- IRN generation is mandatory before dispatching goods for applicable taxpayers.
+- QR code on invoice: must contain IRN, supplier GSTIN, invoice number, date, value.
+- Cancellation only possible within 24 hours; after 24 hours issue credit note.
+- Amendment to e-invoice is NOT allowed; cancel and create new invoice.
+
+## GST on Services (SAC Codes)
+- SAC 9954: Construction services — 12% (affordable housing) or 18%.
+- SAC 9961/9962: Wholesale/retail trade — 18%.
+- SAC 9963: Accommodation, food and beverage — 5% (restaurant), 12%/18% (hotel based on tariff).
+- SAC 9971: Financial services — 18%.
+- SAC 9972: Real estate — 5% (under-construction residential), 12% (commercial).
+- SAC 9981-9997: Professional services — 18%.
+- SAC 9985: IT services/software — 18%.
+- SAC 9993: Education services — mostly exempt; some 18%.
+- SAC 9991: Health care — mostly exempt.
+- Export of services: zero-rated (0% GST), file LUT on portal.
+
+## Input Service Distributor (ISD)
+- ISD distributes ITC of common input services to branches.
+- ISD registration required separately; file GSTR-6 monthly.
+- Distribution based on turnover ratio of branches.
+- ITC received via ISD must be reflected in GSTR-2B of recipient branches.
+
+## Annual Return GSTR-9 Key Points
+- Due date: 31 December of next financial year.
+- Mandatory for regular taxpayers with turnover >₹2 crore (below ₹2cr optional but recommended).
+- GSTR-9C (reconciliation) required if turnover >₹5 crore (self-certified from FY 2020-21 onward).
+- Amendments not possible after filing GSTR-9.
+- Common errors: ITC reversal mismatch, RCM not declared, HSN summary errors.
