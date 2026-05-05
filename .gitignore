@@ -1,19 +1,46 @@
+# OS
 .DS_Store
-*.pyc
-*.egg-info
-*.swp
-tags
-.vscode/
-__pycache__/
+Thumbs.db
 
-# docs
+# Python
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+__pycache__/
+.Python
+*.swp
+*.swo
+
+# Node / JS build
+dist/
+node_modules/
+
+# Frappe build artifacts
+*.egg-info
+tags
+
+# Frappe docs
 india_compliance/docs/current
 
-# JS
-dist/
-node_modules
-
-indiaCompliance/public/css/css
-indiaCompliance/public/js/js
+# Docker broken symlinks (generated at container runtime)
 india_compliance/public/css/css
 india_compliance/public/js/js
+indiaCompliance/public/css/css
+indiaCompliance/public/js/js
+
+# Local secrets (never commit)
+docs/credentials.txt
+credentials.txt
+*.env
+.env.*
+
+# IDE
+.vscode/
+.idea/
+*.code-workspace
+
+# Test output / coverage
+.coverage
+htmlcov/
+.pytest_cache/

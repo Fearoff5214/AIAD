@@ -1,11 +1,11 @@
 @echo off
 setlocal
-rem Ensure you are in the project directory
-cd /d "%~dp0"
+rem Go up one level from scripts/ to the project root
+cd /d "%~dp0.."
 
 echo.
 echo ============================================================
-echo   Fearoff AIAD Starter
+echo   Fearoff AIAD -- GST Compliance Platform
 echo ============================================================
 echo.
 
@@ -29,23 +29,23 @@ if exist venv\Scripts\activate.bat (
     call venv\Scripts\activate.bat
 )
 
-rem Try to run with 'py' launcher (standard on Windows) or fallback to 'python'
+rem Run start_frappe_server.py from scripts/
 where py >nul 2>nul
 if %ERRORLEVEL% EQU 0 (
-    echo Using 'py' launcher to start Fearoff AIAD...
-    py start_frappe_server.py %*
+    echo Starting Fearoff AIAD...
+    py scripts\start_frappe_server.py %*
 ) else (
-    echo 'py' not found, trying 'python'...
-    python start_frappe_server.py %*
+    echo Using python to start Fearoff AIAD...
+    python scripts\start_frappe_server.py %*
 )
 
 if %ERRORLEVEL% NEQ 0 (
     echo.
-    echo [ERROR] Failed to start the server. 
+    echo [ERROR] Failed to start the server.
     echo Please ensure Python is installed and Docker is configured correctly.
+    echo See docs\STARTUP_TROUBLESHOOTING.md for help.
 )
 
-rem Keep the console open after execution
 echo.
 pause
 endlocal
