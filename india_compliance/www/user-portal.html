@@ -166,7 +166,7 @@
     #billing-voice-input { min-height: 92px; resize: vertical; }
     .workspace-table-wrap { border: 1px solid #d8dfeb; border-radius: 12px; background: #fff; padding: 0.9rem; }
     .workspace-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.7rem; }
-    .kpi-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.5rem; }
+    .kpi-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.5rem; }
     .kpi-item { border: 1px solid #d8dfeb; border-radius: 8px; padding: 0.55rem; background: #f8fbff; text-align: center; }
     .kpi-item strong { display: block; font-size: 1.05rem; }
     .table-lite { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
@@ -234,7 +234,7 @@
     <section class="panel gst-workspace-panel">
       <div class="panel-head">
         <h2>Your invoices</h2>
-        <p>Check, reconcile and export</p>
+        <p>Bills you confirm in Smart Billing are saved here</p>
       </div>
 
       <div id="kpi-summary"></div>
@@ -255,8 +255,7 @@
         <div class="workspace-actions">
           <button class="val-btn" onclick="loadInvoices()">Refresh invoices</button>
           <button class="val-btn" onclick="runReconciliation()">Check for mismatches</button>
-          <button class="val-btn" onclick="loadNotifications()">Show alerts</button>
-          <button class="val-btn" onclick="exportReport()">Export as CSV</button>
+                    <button class="val-btn" onclick="exportReport()">Export as CSV</button>
         </div>
         <div id="workspace-output" aria-live="polite"><p class="state-note">Loading your invoices…</p></div>
       </div>
@@ -810,7 +809,7 @@
   function renderInvoices(rows) {
     const out = document.getElementById('workspace-output');
     if (!rows || !rows.length) {
-      out.innerHTML = '<p class="state-note">No invoices yet. <a href="/smart-billing">Create your first bill</a> and it will appear here.</p>';
+      out.innerHTML = '<p class="state-note">No saved invoices yet. <a href="/smart-billing">Create a bill</a>, confirm it, and it is saved here.</p>';
       return;
     }
 
@@ -832,7 +831,8 @@
     const out = document.getElementById('workspace-output');
     out.innerHTML = '<p class="state-note">Loading your invoices…</p>';
     try {
-      const res = await apiCall('india_compliance.gst_india.api.portal_management.gst_invoice_list');
+      const res = await apiCall('india_compliance.gst_india.api.portal_invoices.list_invoices');
+      if (!res || res.exc_type || res.success === false) throw new Error('load failed');
       renderInvoices(res.data || []);
     } catch (err) {
       out.innerHTML = '<p class="state-note">We couldn\'t load your invoices. Check your connection, then choose <strong>Refresh invoices</strong>.</p>';
@@ -840,12 +840,18 @@
   }
 
   async function runReconciliation() {
-    const res = await apiCall('india_compliance.gst_india.api.portal_management.gst_reconcile_run');
-    document.getElementById('workspace-output').innerHTML = '<pre>' + JSON.stringify(res.data, null, 2) + '</pre>';
+    const out = document.getElementById('workspace-output');
+    const res = await apiCall('india_compliance.gst_india.api.portal_invoices.reconcile');
+    if (!res || res.exc_type || res.success === false) { out.innerHTML = '<p class="state-note">We could not run the check. Sign in and try again.</p>'; return; }
+    const bad = (res.data && res.data.mismatched) || [];
+    const good = (res.data && res.data.matched) || [];
+    out.innerHTML = '<p><strong>' + good.length + '</strong> invoice(s) passed, <strong>' + bad.length + '</strong> need attention.</p>' +
+      (bad.length ? '<ul>' + bad.map(r => '<li><strong>' + esc(r.invoice_number) + '</strong>: ' + esc((r.notes || []).join(' ')) + '</li>').join('') + '</ul>' : '') +
+      '<p class="state-note">This checks each saved invoice for valid GSTIN, HSN codes and tax maths. It does not compare against GSTR-2B yet.</p>';
   }
 
   async function loadDashboardSummary() {
-    const res = await apiCall('india_compliance.gst_india.api.portal_management.gst_dashboard_summary');
+    const res = await apiCall('india_compliance.gst_india.api.portal_invoices.dashboard_summary');
     const d = (res && res.data) || {};
     let kpiSummary = document.getElementById('kpi-summary');
     if (!kpiSummary) {
@@ -862,18 +868,16 @@
       "<div class='kpi-item'><strong>" + (d.total_invoices || 0) + '</strong><div>Total</div></div>' +
       "<div class='kpi-item'><strong>" + (d.matched || 0) + '</strong><div>Matched</div></div>' +
       "<div class='kpi-item'><strong>" + (d.mismatched || 0) + '</strong><div>Mismatched</div></div>' +
-      "<div class='kpi-item'><strong>" + (d.missing || 0) + '</strong><div>Missing</div></div>' +
       "<div class='kpi-item'><strong>" + (d.compliance_score || 0) + '%</strong><div>Compliance</div></div>' +
       '</div>';
   }
 
   async function loadNotifications() {
-    const res = await apiCall('india_compliance.gst_india.api.portal_management.gst_notifications');
-    document.getElementById('workspace-output').innerHTML = '<pre>' + JSON.stringify(res.data, null, 2) + '</pre>';
+    await runReconciliation();
   }
 
   async function exportReport() {
-    const res = await apiCall('india_compliance.gst_india.api.portal_management.gst_report_export');
+    const res = await apiCall('india_compliance.gst_india.api.portal_invoices.export_csv');
     const csv = (res.data && res.data.csv) || '';
     document.getElementById('workspace-output').innerHTML = "<label for='csv-out' style='font-weight:600'>CSV export (copy or save)</label><textarea id='csv-out' rows='10' style='width:100%'>" + esc(csv) + '</textarea>';
   }

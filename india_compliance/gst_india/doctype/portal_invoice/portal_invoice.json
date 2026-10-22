@@ -1,0 +1,142 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-10-22 00:00:00.000000",
+ "default_view": "List",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "invoice_number",
+  "portal_tenant",
+  "user",
+  "source",
+  "customer",
+  "party_gstin",
+  "invoice_date",
+  "supply_type",
+  "taxable_value",
+  "tax_amount",
+  "total_amount",
+  "check_status",
+  "check_notes",
+  "items_json"
+ ],
+ "fields": [
+  {
+   "fieldname": "invoice_number",
+   "fieldtype": "Data",
+   "label": "Invoice Number",
+   "in_list_view": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "portal_tenant",
+   "fieldtype": "Link",
+   "label": "Portal Tenant",
+   "options": "Portal Tenant",
+   "in_list_view": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "Saved By",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "source",
+   "fieldtype": "Select",
+   "label": "Source",
+   "options": "voice_billing\nocr_billing",
+   "in_list_view": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Data",
+   "label": "Customer / Supplier"
+  },
+  {
+   "fieldname": "party_gstin",
+   "fieldtype": "Data",
+   "label": "Party GSTIN"
+  },
+  {
+   "fieldname": "invoice_date",
+   "fieldtype": "Date",
+   "label": "Invoice Date",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "supply_type",
+   "fieldtype": "Select",
+   "label": "Supply Type",
+   "options": "intra\ninter",
+   "default": "intra"
+  },
+  {
+   "fieldname": "taxable_value",
+   "fieldtype": "Currency",
+   "label": "Taxable Value",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tax_amount",
+   "fieldtype": "Currency",
+   "label": "Tax Amount",
+   "reqd": 1
+  },
+  {
+   "fieldname": "total_amount",
+   "fieldtype": "Currency",
+   "label": "Total Amount",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "check_status",
+   "fieldtype": "Select",
+   "label": "Check Status",
+   "options": "matched\nmismatch",
+   "default": "matched",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "check_notes",
+   "fieldtype": "Small Text",
+   "label": "Check Notes"
+  },
+  {
+   "fieldname": "items_json",
+   "fieldtype": "Code",
+   "label": "Items JSON",
+   "options": "JSON"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "module": "GST India",
+ "name": "Portal Invoice",
+ "naming_rule": "Random",
+ "autoname": "hash",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

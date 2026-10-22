@@ -502,14 +502,40 @@ function handleVoiceCommand(cmd) {
   }
 }
 
+// Saves the reviewed bill to the signed-in business. The server recomputes every amount.
+let _saving = false;
+function saveError(resp) {
+  if (resp.message?.error) return resp.message.error;
+  if (resp.exc_type === 'PermissionError') {
+    return 'Please sign in to save bills. Your items are still on screen.';
+  }
+  return 'Could not save the bill. Check your connection and try again.';
+}
+async function saveInvoice(source, invoice, onSaved) {
+  if (_saving) return;
+  _saving = true;
+  try {
+    const resp = await callAPI('portal_invoices.save_invoice', { source, invoice_json: JSON.stringify(invoice) });
+    if (resp.message?.success) {
+      const inv = resp.message.invoice;
+      toast('Saved ' + inv.invoice_number + ' — total ₹' + Number(inv.total).toFixed(2));
+      onSaved();
+    } else {
+      toast(saveError(resp), false);
+    }
+  } catch (e) {
+    toast('Could not reach the server. Your items are still on screen.', false);
+  } finally {
+    _saving = false;
+  }
+}
+
 async function confirmVoiceInvoice() {
   const items = getRowsAsItems('voice-tbody');
-  if (!items.length) { toast('No items to save', false); return; }
+  if (!items.length) { toast('Add at least one item first', false); return; }
   const supplyType = document.getElementById('supply-type')?.value || 'intra';
-  const invoice = { items, source:'voice_billing', date: new Date().toISOString().split('T')[0], supply_type: supplyType };
-  const resp = await callAPI('voice_billing.confirm_voice_invoice', { invoice_json: JSON.stringify(invoice) });
-  if (resp.message?.success) { toast('Invoice saved!'); clearVoice(); }
-  else toast(resp.message?.error||'Save failed', false);
+  await saveInvoice('voice_billing',
+    { items, date: new Date().toISOString().split('T')[0], supply_type: supplyType }, clearVoice);
 }
 
 async function runComplianceCheck(invoice, panelId) {
@@ -612,11 +638,9 @@ async function runOCR() {
 
 async function confirmOCRInvoice() {
   const items = getRowsAsItems('ocr-tbody');
-  if (!items.length) { toast('No items to save', false); return; }
-  const invoice = { items, source:'ocr_billing', date: new Date().toISOString().split('T')[0] };
-  const resp = await callAPI('ocr_billing.confirm_ocr_invoice', { invoice_json: JSON.stringify(invoice) });
-  if (resp.message?.success) { toast('Invoice confirmed!'); clearOCR(); }
-  else toast(resp.message?.error||'Save failed', false);
+  if (!items.length) { toast('Add at least one item first', false); return; }
+  await saveInvoice('ocr_billing',
+    { items, date: new Date().toISOString().split('T')[0] }, clearOCR);
 }
 
 function addOCRRow() { addBlankRow('ocr-tbody'); }
