@@ -102,11 +102,25 @@
     .val-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:.6rem;align-items:center}
     .val-row input,select{border:1px solid #d1d5db;border-radius:7px;padding:.5rem .7rem;font-size:.85rem;width:100%}
     .val-hdr{font-weight:700;font-size:.78rem;color:#6b7280;text-transform:uppercase;padding:.3rem .7rem}
-    .val-btn{padding:.65rem 1.4rem;border:none;border-radius:8px;background:linear-gradient(135deg,#0d9488,#0369a1);color:#fff;font-weight:700;cursor:pointer;font-size:.9rem;margin-top:.5rem}
+    .val-btn{min-height:44px;padding:.65rem 1.4rem;border:none;border-radius:8px;background:#0f766e;color:#fff;font-weight:700;cursor:pointer;font-size:.9rem;margin-top:.5rem}
     .val-result{margin-top:1rem}
     .err-item{background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:.6rem .9rem;margin:.4rem 0;font-size:.85rem;color:#991b1b}
     .ok-item{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:.6rem .9rem;margin:.4rem 0;font-size:.85rem;color:#15803d}
     .section-tip{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:.7rem 1rem;font-size:.83rem;color:#92400e;margin-bottom:.9rem}
+    a:focus-visible, button:focus-visible, summary:focus-visible { outline: 3px solid #111827; outline-offset: 2px; box-shadow: 0 0 0 5px #5eead4; }
+    .btn-primary { display: inline-flex; align-items: center; min-height: 44px; padding: 0.55rem 1.2rem; border-radius: 10px; background: #0f766e; color: #fff; font-weight: 700; text-decoration: none; }
+    .btn-secondary { display: inline-flex; align-items: center; min-height: 44px; padding: 0.55rem 1.2rem; border-radius: 10px; border: 1px solid #0f766e; color: #0f766e; font-weight: 700; text-decoration: none; background: #fff; }
+    .hero-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+    .feature-card { position: relative; }
+    .feature-card a::after { content: ""; position: absolute; inset: 0; border-radius: 12px; }
+    .feature-card:focus-within { outline: 3px solid #111827; outline-offset: 2px; }
+    .feature-card a:focus-visible { outline: 0; box-shadow: none; }
+    .sector-nav a, .rail-card a { min-height: 44px; display: flex; align-items: center; }
+    .sector-nav a:hover { background: var(--accent-soft); }
+    details.panel > summary { cursor: pointer; font-weight: 700; font-size: 1.1rem; min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+    details.panel > summary small { font-weight: 400; color: var(--muted); font-size: 0.85rem; }
+    .state-note { padding: 0.9rem; border: 1px dashed #9ca3af; border-radius: 10px; color: #374151; font-size: 0.9rem; }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
     .main-zone { display: grid; gap: 1.5rem; }
     .hero-card, .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 1.2rem; }
     .hero-card { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
@@ -190,8 +204,7 @@
       <a href="/gst-copilot">🤖 GST Copilot</a>
       <a href="/gst-demo">📄 GST Demo</a>
       <a href="/app">📋 ERP Desk</a>
-      <a href="/user-register">➕ Register Account</a>
-      <a href="/admin-user-management">⚙️ Admin Panel</a>
+      <a href="/user-register">➕ Create account</a>
     </div>
   </aside>
 
@@ -202,7 +215,7 @@
         <h1 id="company-title">Loading your dashboard…</h1>
         <p id="welcome-line">Fetching industry‑specific tools and options.</p>
       </div>
-      <span id="industry-pill" class="industry-pill">-</span>
+      <div><span id="industry-pill" class="industry-pill">-</span><div id="hero-actions" class="hero-actions" style="margin-top:.7rem"></div></div>
     </section>
 
     <section class="panel">
@@ -220,48 +233,37 @@
 
     <section class="panel gst-workspace-panel">
       <div class="panel-head">
-        <h2>GST Invoice Workspace</h2>
-        <p>Upload, OCR, voice bill entry, reconcile, and export</p>
+        <h2>Your invoices</h2>
+        <p>Check, reconcile and export</p>
       </div>
 
       <div id="kpi-summary"></div>
 
 
 
-      <div class="workspace-grid">
-        <article class="workspace-card" style="border:2px solid #0f766e">
-          <h3>⚡ Smart Billing</h3>
-          <p>Voice or scan a bill → structured GST invoice in seconds. Supports Hinglish speech, camera capture, and offline OCR.</p>
+      <div class="workspace-grid" style="grid-template-columns:1fr">
+        <article class="workspace-card">
+          <h3>Create a bill</h3>
+          <p>Speak the bill (Hinglish works) or scan a paper bill. You review the GST invoice before anything is saved.</p>
           <div class="workspace-actions" style="margin-top:.6rem">
-            <a href="/smart-billing" style="display:inline-block;padding:.55rem 1.1rem;background:linear-gradient(135deg,#0f766e,#065f46);color:#fff;border-radius:8px;font-weight:700;font-size:.85rem;text-decoration:none">🚀 Open Smart Billing</a>
-          </div>
-        </article>
-
-        <article class="workspace-card" style="border:2px solid #0369a1">
-          <h3>📷 Scan Bill (OCR)</h3>
-          <p>Upload or photograph a purchase bill. The AI extracts items, quantities, prices and GST automatically — you review before saving.</p>
-          <div class="workspace-actions" style="margin-top:.6rem">
-            <a href="/smart-billing" style="display:inline-block;padding:.55rem 1.1rem;background:linear-gradient(135deg,#0369a1,#1e40af);color:#fff;border-radius:8px;font-weight:700;font-size:.85rem;text-decoration:none">📷 Open Bill Scanner</a>
+            <a class="btn-primary" href="/smart-billing">Open Smart Billing</a>
           </div>
         </article>
       </div>
 
       <div class="workspace-table-wrap">
         <div class="workspace-actions">
-          <button class="val-btn" onclick="loadInvoices()">Load Invoices</button>
-          <button class="val-btn" onclick="runReconciliation()">Run Reconciliation</button>
-          <button class="val-btn" onclick="loadNotifications()">Load Alerts</button>
-          <button class="val-btn" onclick="exportReport()">Export CSV</button>
+          <button class="val-btn" onclick="loadInvoices()">Refresh invoices</button>
+          <button class="val-btn" onclick="runReconciliation()">Check for mismatches</button>
+          <button class="val-btn" onclick="loadNotifications()">Show alerts</button>
+          <button class="val-btn" onclick="exportReport()">Export as CSV</button>
         </div>
-        <div id="workspace-output"></div>
+        <div id="workspace-output" aria-live="polite"><p class="state-note">Loading your invoices…</p></div>
       </div>
     </section>
 
-    <section class="panel">
-      <div class="panel-head">
-        <h2>📄 GST Invoice Compliance Demo</h2>
-        <p>See correct vs incorrect billing and validate compliance in real-time.</p>
-      </div>
+    <details class="panel">
+      <summary>GST invoice examples and checker <small>See what a correct invoice looks like</small></summary>
       
       <div class="gd-tabs">
         <button class="gd-tab ok active" onclick="showTab('ok',this)">✅ Correct Invoice</button>
@@ -367,11 +369,11 @@
         </div>
         <div style="display:flex;gap:.5rem;margin-top:.8rem">
           <button class="val-btn" onclick="addRow()">+ Add Line</button>
-          <button class="val-btn" style="background:linear-gradient(135deg,#0f766e,#065f46)" onclick="validateInvoice()">🔍 Run Compliance Check</button>
+          <button class="val-btn" onclick="validateInvoice()">🔍 Run Compliance Check</button>
         </div>
         <div id="val-result" class="val-result"></div>
       </div>
-    </section>
+    </details>
   </main>
 </div>
 
@@ -440,9 +442,6 @@
       const a = document.createElement("a");
       a.href = l.url;
       a.textContent = l.label;
-      a.style.cssText = "display:block;padding:.35rem .5rem;border-radius:6px;font-size:.82rem;color:inherit;text-decoration:none;transition:background .15s";
-      a.onmouseover = () => a.style.background = "rgba(255,255,255,.08)";
-      a.onmouseout  = () => a.style.background = "";
       navEl.appendChild(a);
     });
   }
@@ -457,17 +456,14 @@
       if (!def) return;
       const card = document.createElement("article");
       card.className = "feature-card";
-      card.style.cssText = `cursor:pointer;border-top:3px solid ${def.color};transition:transform .15s,box-shadow .15s`;
-      card.onmouseover = () => { card.style.transform="translateY(-3px)"; card.style.boxShadow="0 6px 20px rgba(0,0,0,.12)"; };
-      card.onmouseout  = () => { card.style.transform=""; card.style.boxShadow=""; };
-      card.onclick = () => window.location.href = def.url;
+      card.style.cssText = `border-top:3px solid ${def.color}`;
       card.innerHTML = `
         <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.35rem">
-          <span style="font-size:1.4rem">${def.icon}</span>
-          <h3 style="margin:0;font-size:.92rem;color:${def.color}">${def.label}</h3>
+          <span style="font-size:1.4rem" aria-hidden="true">${def.icon}</span>
+          <h3 style="margin:0;font-size:.95rem">${def.label}</h3>
         </div>
-        <p style="margin:0;font-size:.78rem;color:#6b7280">${def.desc}</p>
-        <a href="${def.url}" style="display:inline-block;margin-top:.5rem;font-size:.75rem;font-weight:700;color:${def.color};text-decoration:none">Open in ERP →</a>`;
+        <p style="margin:0;font-size:.82rem;color:#4b5563">${def.desc}</p>
+        <a href="${def.url}" style="display:inline-block;margin-top:.5rem;font-size:.82rem;font-weight:700;color:#0f766e;text-decoration:none">Open ${def.label} →</a>`;
       featureGrid.appendChild(card);
     });
     const count = modules.length;
@@ -492,8 +488,9 @@
       const data = payload.message || {};
       if (!data.tenant) {
         document.getElementById("company-title").textContent = "Welcome to Fearoff AIAD";
-        document.getElementById("welcome-line").textContent = "Register your company to unlock sector-specific modules.";
+        document.getElementById("welcome-line").textContent = "Create an account to get a workspace set up for your business, or sign in if you already have one.";
         document.getElementById("industry-pill").textContent = "Wholesale";
+        document.getElementById("hero-actions").innerHTML = '<a class="btn-primary" href="/user-register">Create account</a><a class="btn-secondary" href="/gst-login">Sign in</a>';
         renderFeatureCards([]);
         renderActionCards("Wholesale");
         renderSectorNav("Wholesale");
@@ -523,8 +520,8 @@
         body: JSON.stringify({ event_type: "portal_view", route: "/user-portal" })
       });
     } catch (err) {
-      document.getElementById("company-title").textContent = "Portal unavailable";
-      document.getElementById("welcome-line").textContent = `Unable to load portal: ${err.message}`;
+      document.getElementById("company-title").textContent = "We couldn't load your portal";
+      document.getElementById("welcome-line").textContent = "Check your connection and refresh the page. If it keeps happening, contact your admin.";
     }
   }
 
@@ -567,6 +564,10 @@
     else if (ok) html = '<div class="ok-item" style="font-weight:700">✅ Compliance Verified!</div>' + html;
     else html = '<div class="err-item" style="font-weight:700">⚠️ Compliance Mismatches Found</div>' + html;
     document.getElementById('val-result').innerHTML = html;
+  }
+
+  function esc(v) {
+    return String(v == null ? '' : v).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
   }
 
   function safeJsonParse(text) {
@@ -809,14 +810,14 @@
   function renderInvoices(rows) {
     const out = document.getElementById('workspace-output');
     if (!rows || !rows.length) {
-      out.innerHTML = '<p>No invoices found.</p>';
+      out.innerHTML = '<p class="state-note">No invoices yet. <a href="/smart-billing">Create your first bill</a> and it will appear here.</p>';
       return;
     }
 
     out.innerHTML =
       "<table class='table-lite'><thead><tr><th>Invoice</th><th>GSTIN</th><th>Date</th><th>Amount</th><th>GST</th><th>Status</th></tr></thead><tbody>" +
       rows.map(function (x) {
-        return '<tr><td>' + x.invoice_number + '</td><td>' + x.gstin + '</td><td>' + x.date + '</td><td>₹' + x.amount + '</td><td>₹' + x.gst + '</td><td>' + x.status + '</td></tr>';
+        return '<tr><td>' + esc(x.invoice_number) + '</td><td>' + esc(x.gstin) + '</td><td>' + esc(x.date) + '</td><td>₹' + esc(x.amount) + '</td><td>₹' + esc(x.gst) + '</td><td>' + esc(x.status) + '</td></tr>';
       }).join('') +
       '</tbody></table>';
   }
@@ -828,8 +829,14 @@
   }
 
   async function loadInvoices() {
-    const res = await apiCall('india_compliance.gst_india.api.portal_management.gst_invoice_list');
-    renderInvoices(res.data || []);
+    const out = document.getElementById('workspace-output');
+    out.innerHTML = '<p class="state-note">Loading your invoices…</p>';
+    try {
+      const res = await apiCall('india_compliance.gst_india.api.portal_management.gst_invoice_list');
+      renderInvoices(res.data || []);
+    } catch (err) {
+      out.innerHTML = '<p class="state-note">We couldn\'t load your invoices. Check your connection, then choose <strong>Refresh invoices</strong>.</p>';
+    }
   }
 
   async function runReconciliation() {
@@ -868,7 +875,7 @@
   async function exportReport() {
     const res = await apiCall('india_compliance.gst_india.api.portal_management.gst_report_export');
     const csv = (res.data && res.data.csv) || '';
-    document.getElementById('workspace-output').innerHTML = "<textarea rows='10' style='width:100%'>" + csv + '</textarea>';
+    document.getElementById('workspace-output').innerHTML = "<label for='csv-out' style='font-weight:600'>CSV export (copy or save)</label><textarea id='csv-out' rows='10' style='width:100%'>" + esc(csv) + '</textarea>';
   }
 
   async function initPortal() {
@@ -880,6 +887,8 @@
       if (user && user !== 'Guest') {
         await loadDashboardSummary();
         await loadInvoices();
+      } else {
+        document.getElementById('workspace-output').innerHTML = '<p class="state-note"><a href="/gst-login">Sign in</a> to see your invoices.</p>';
       }
     } catch (e) {
       // Keep portal usable even when auth check fails.

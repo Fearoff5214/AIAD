@@ -10,16 +10,19 @@
     .brand-dot{background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 0 10px var(--accent-glow)}
     .brand-type,.eyebrow,.stat-val,.sn.active,.gst-chip{color:var(--accent)}
     .hero{background:linear-gradient(120deg,rgba(167,139,250,.18),rgba(99,102,241,.1),rgba(0,0,0,0));border-color:rgba(167,139,250,.25)}
-    .hero-badge{background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 4px 16px var(--accent-glow)}
     .sn.active{background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.25)}
     .ph-badge{background:rgba(167,139,250,.15);color:var(--accent);border-color:rgba(167,139,250,.3)}
     .gst-chip{background:rgba(167,139,250,.1);border-color:rgba(167,139,250,.25)}.gst-chip:hover{background:rgba(167,139,250,.2)}
-    .qa-btn{background:linear-gradient(135deg,var(--accent),var(--accent2))}
   </style>
-</head>
+  </head>
 <body>
+<a class="skip-link" href="#main-content">Skip to main content</a>
 <div class="page">
-  <aside class="sidebar">
+  <header class="topbar">
+    <div class="brand"><div class="brand-dot"></div><div><div class="brand-name">Fearoff AIAD</div><div class="brand-type">🌐 BUSINESS</div></div></div>
+    <button type="button" class="menu-btn" id="menu-btn" aria-expanded="false" aria-controls="site-menu">☰ Menu</button>
+  </header>
+  <aside class="sidebar" id="site-menu" aria-label="Main menu">
     <div class="brand"><div class="brand-dot"></div><div><div class="brand-name">Fearoff AIAD</div><div class="brand-type">🌐 BUSINESS</div></div></div>
     <nav class="sidebar-nav">
       <span class="sn-section">Workspace</span>
@@ -37,58 +40,57 @@
       <a href="/app/e-invoice-log" class="sn">📄 E-Invoice</a>
       <a href="/app/gst-settings" class="sn">⚙️ GST Settings</a>
       <span class="sn-section">Admin</span>
-      <a href="/admin-user-management" class="sn">⚙️ Admin Panel</a>
+      <a href="/admin-user-management" class="sn" data-admin-only hidden>⚙️ Admin Panel</a>
       <a href="/app" class="sn">📋 ERP Desk</a>
     </nav>
     <div class="sidebar-footer">
-      <div class="user-email" id="ud-email">Loading…</div>
+      <div class="user-role-badge role-user" id="ud-role-badge">USER</div>
+      <div class="user-email" id="ud-email">Signing you in…</div>
       <div class="user-company" id="ud-company">Business Portal</div>
+      <button type="button" class="logout-btn" onclick="doLogout()">Log out</button>
     </div>
   </aside>
-  <main class="main">
+  <main class="main" id="main-content">
     <div class="hero">
       <div class="hero-left">
         <div class="eyebrow">General Business Workspace</div>
         <h1 id="ud-title">Welcome to your Dashboard</h1>
         <p id="ud-sub">Core GST compliance, accounting, sales, purchasing and ERP tools for your business.</p>
       </div>
-      <span class="hero-badge">🌐 BUSINESS</span>
-    </div>
-    <div class="stats-row">
-      <div class="stat-card"><div class="stat-val">💰</div><div class="stat-lbl">Accounting</div></div>
-      <div class="stat-card"><div class="stat-val">🧾</div><div class="stat-lbl">Invoicing</div></div>
-      <div class="stat-card"><div class="stat-val">📦</div><div class="stat-lbl">Stock</div></div>
-      <div class="stat-card"><div class="stat-val">📄</div><div class="stat-lbl">GST Ready</div></div>
+      <div class="hero-actions">
+        <a class="btn-primary" href="/smart-billing">⚡ Create a bill</a>
+        <a class="btn-secondary" href="/gst-copilot">Ask GST Copilot</a>
+      </div>
     </div>
     <div class="panel">
       <div class="ph"><h2>Core Modules</h2><span class="ph-badge">7 Active</span></div>
       <div class="mod-grid">
-        <div class="mod-card" style="border-top:3px solid #0369a1" onclick="go('/app/accounting')">
+        <div class="mod-card" style="border-top:3px solid #0369a1">
           <div class="mod-icon">💰</div><div class="mod-name" style="color:#0369a1">Accounting</div>
           <div class="mod-desc">Journal entries, ledger, P&amp;L and balance sheet reports.</div>
           <a class="mod-link" href="/app/accounting" style="color:#0369a1">Open →</a>
         </div>
-        <div class="mod-card" style="border-top:3px solid #0f766e" onclick="go('/app/sales-invoice')">
+        <div class="mod-card" style="border-top:3px solid #0f766e">
           <div class="mod-icon">🧾</div><div class="mod-name" style="color:#0f766e">Sales Invoice</div>
           <div class="mod-desc">GST-compliant sales invoicing with e-invoice support.</div>
           <a class="mod-link" href="/app/sales-invoice" style="color:#0f766e">Open →</a>
         </div>
-        <div class="mod-card" style="border-top:3px solid #7c3aed" onclick="go('/app/purchase-order')">
+        <div class="mod-card" style="border-top:3px solid #7c3aed">
           <div class="mod-icon">🛒</div><div class="mod-name" style="color:#7c3aed">Purchase Order</div>
           <div class="mod-desc">Manage vendor purchase orders and inward stock.</div>
           <a class="mod-link" href="/app/purchase-order" style="color:#7c3aed">Open →</a>
         </div>
-        <div class="mod-card" style="border-top:3px solid #15803d" onclick="go('/app/stock-ledger-entry')">
+        <div class="mod-card" style="border-top:3px solid #15803d">
           <div class="mod-icon">📦</div><div class="mod-name" style="color:#15803d">Stock</div>
           <div class="mod-desc">Inventory management and stock movement tracking.</div>
           <a class="mod-link" href="/app/stock-ledger-entry" style="color:#15803d">Open →</a>
         </div>
-        <div class="mod-card" style="border-top:3px solid #ea580c" onclick="go('/app/lead')">
+        <div class="mod-card" style="border-top:3px solid #ea580c">
           <div class="mod-icon">🎯</div><div class="mod-name" style="color:#ea580c">CRM</div>
           <div class="mod-desc">Leads, opportunities and customer relationship management.</div>
           <a class="mod-link" href="/app/lead" style="color:#ea580c">Open →</a>
         </div>
-        <div class="mod-card" style="border-top:3px solid #a78bfa" onclick="go('/app/e-invoice-log')">
+        <div class="mod-card" style="border-top:3px solid #a78bfa">
           <div class="mod-icon">📄</div><div class="mod-name" style="color:#a78bfa">E-Invoice</div>
           <div class="mod-desc">GST e-invoicing with auto IRN generation.</div>
           <a class="mod-link" href="/app/e-invoice-log" style="color:#a78bfa">Open →</a>
@@ -116,15 +118,7 @@
     </div>
   </main>
 </div>
-<script>
-function go(u){window.location.href=u}
-(async()=>{
-  try{const r=await fetch('/api/method/india_compliance.gst_india.api.portal_management.get_user_dashboard_page');const d=(await r.json()).message||{};
-    if(d.company_name){document.getElementById('ud-title').textContent=d.company_name;document.getElementById('ud-company').textContent=d.company_name;}
-    if(d.industry_type&&d.industry_type!=='Other'){window.location.href=d.dashboard_url||'/user-portal';}
-  }catch(e){}
-  try{const r2=await fetch('/api/method/frappe.auth.get_logged_user');const u=(await r2.json()).message;if(u)document.getElementById('ud-email').textContent=u;}catch(e){}
-})();
-</script>
+<script src="/assets/india_compliance/js/ud-shared.js"></script>
+<script>udInit('Other');</script>
 </body>
 </html>

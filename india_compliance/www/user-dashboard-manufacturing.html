@@ -11,18 +11,27 @@
     .type-label{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
     .brand-dot{background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 0 10px var(--accent-glow)}
     .hero{background:linear-gradient(120deg,rgba(249,115,22,.18),rgba(220,38,38,.1),rgba(0,0,0,0));border-color:rgba(249,115,22,.25)}
-    .hero-badge{background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 4px 16px var(--accent-glow)}
     .eyebrow,.sn.active,.stat-val,.mod-link-accent,.gst-chip{color:var(--accent)}
     .sn.active{background:rgba(249,115,22,.12);border-color:rgba(249,115,22,.25)}
     .gst-chip{background:rgba(249,115,22,.1);border-color:rgba(249,115,22,.25)}
     .gst-chip:hover{background:rgba(249,115,22,.2)}
     .ph-badge{background:rgba(249,115,22,.15);color:var(--accent);border-color:rgba(249,115,22,.3)}
-    .qa-btn{background:linear-gradient(135deg,var(--accent),var(--accent2))}
   </style>
-</head>
+  </head>
 <body>
+<a class="skip-link" href="#main-content">Skip to main content</a>
 <div class="page">
-  <aside class="sidebar">
+  <header class="topbar">
+    <div class="brand">
+          <div class="brand-dot"></div>
+          <div>
+            <div class="brand-name">Fearoff AIAD</div>
+            <div class="brand-type type-label">🏭 MANUFACTURING</div>
+          </div>
+    </div>
+    <button type="button" class="menu-btn" id="menu-btn" aria-expanded="false" aria-controls="site-menu">☰ Menu</button>
+  </header>
+  <aside class="sidebar" id="site-menu" aria-label="Main menu">
     <div class="brand">
       <div class="brand-dot"></div>
       <div>
@@ -46,60 +55,57 @@
       <a href="/app/e-invoice-log" class="sn">📄 E-Invoice</a>
       <a href="/app/e-way-bill-log" class="sn">🚚 E-Way Bill</a>
       <span class="sn-section">Admin</span>
-      <a href="/admin-user-management" class="sn">⚙️ Admin Panel</a>
+      <a href="/admin-user-management" class="sn" data-admin-only hidden>⚙️ Admin Panel</a>
       <a href="/app" class="sn">📋 ERP Desk</a>
     </nav>
     <div class="sidebar-footer">
       <div class="user-role-badge role-user" id="ud-role-badge">USER</div>
-      <div class="user-email" id="ud-email">Loading…</div>
+      <div class="user-email" id="ud-email">Signing you in…</div>
       <div class="user-company" id="ud-company">Manufacturing Portal</div>
-      <button class="logout-btn" onclick="doLogout()">🚪 Logout</button>
+      <button class="logout-btn" onclick="doLogout()">Log out</button>
     </div>
   </aside>
-  <main class="main">
+  <main class="main" id="main-content">
     <div class="hero">
       <div class="hero-left">
         <div class="eyebrow">Manufacturing Workspace</div>
         <h1 id="ud-title">Welcome to your Dashboard</h1>
         <p id="ud-sub">Production, BOM, quality control, stock and GST — all in one place.</p>
       </div>
-      <span class="hero-badge">🏭 MANUFACTURING</span>
-    </div>
-    <div class="stats-row">
-      <div class="stat-card"><div class="stat-val">🔧</div><div class="stat-lbl">Production</div></div>
-      <div class="stat-card"><div class="stat-val">📦</div><div class="stat-lbl">Stock Control</div></div>
-      <div class="stat-card"><div class="stat-val">✅</div><div class="stat-lbl">Quality</div></div>
-      <div class="stat-card"><div class="stat-val">📄</div><div class="stat-lbl">E-Invoice</div></div>
+      <div class="hero-actions">
+        <a class="btn-primary" href="/smart-billing">⚡ Create a bill</a>
+        <a class="btn-secondary" href="/gst-copilot">Ask GST Copilot</a>
+      </div>
     </div>
     <div class="panel">
       <div class="ph"><h2>Core Modules</h2><span class="ph-badge">12 Active</span></div>
       <div class="mod-grid">
-        <div class="mod-card" style="border-top:3px solid #f97316" onclick="go('/app/production-plan')">
+        <div class="mod-card" style="border-top:3px solid #f97316">
           <div class="mod-icon">🔧</div><div class="mod-name" style="color:#f97316">Production Plan</div>
           <div class="mod-desc">Plan production from sales orders or material requests.</div>
           <a class="mod-link" href="/app/production-plan" style="color:#f97316">Open →</a>
         </div>
-        <div class="mod-card" style="border-top:3px solid #8b5cf6" onclick="go('/app/bom')">
+        <div class="mod-card" style="border-top:3px solid #8b5cf6">
           <div class="mod-icon">📋</div><div class="mod-name" style="color:#8b5cf6">Bill of Materials</div>
           <div class="mod-desc">Multi-level BOM with component cost rollup and versioning.</div>
           <a class="mod-link" href="/app/bom" style="color:#8b5cf6">Open →</a>
         </div>
-        <div class="mod-card" style="border-top:3px solid #0891b2" onclick="go('/app/quality-inspection')">
+        <div class="mod-card" style="border-top:3px solid #0891b2">
           <div class="mod-icon">✅</div><div class="mod-name" style="color:#0891b2">Quality Inspection</div>
           <div class="mod-desc">QC on inward, in-process, and finished goods.</div>
           <a class="mod-link" href="/app/quality-inspection" style="color:#0891b2">Open →</a>
         </div>
-        <div class="mod-card" style="border-top:3px solid #15803d" onclick="go('/app/stock-ledger-entry')">
+        <div class="mod-card" style="border-top:3px solid #15803d">
           <div class="mod-icon">📦</div><div class="mod-name" style="color:#15803d">Stock &amp; Inventory</div>
           <div class="mod-desc">Track raw materials, WIP and finished goods across warehouses.</div>
           <a class="mod-link" href="/app/stock-ledger-entry" style="color:#15803d">Open →</a>
         </div>
-        <div class="mod-card" style="border-top:3px solid #0f766e" onclick="go('/app/e-invoice-log')">
+        <div class="mod-card" style="border-top:3px solid #0f766e">
           <div class="mod-icon">📄</div><div class="mod-name" style="color:#0f766e">E-Invoice</div>
           <div class="mod-desc">Auto-generate IRN and QR codes for GST-compliant invoicing.</div>
           <a class="mod-link" href="/app/e-invoice-log" style="color:#0f766e">Open →</a>
         </div>
-        <div class="mod-card" style="border-top:3px solid #92400e" onclick="go('/app/e-way-bill-log')">
+        <div class="mod-card" style="border-top:3px solid #92400e">
           <div class="mod-icon">🚚</div><div class="mod-name" style="color:#92400e">E-Way Bill</div>
           <div class="mod-desc">Generate, update and cancel e-way bills for shipments.</div>
           <a class="mod-link" href="/app/e-way-bill-log" style="color:#92400e">Open →</a>
@@ -128,40 +134,7 @@
     </div>
   </main>
 </div>
-<script>
-function go(u){window.location.href=u}
-
-async function doLogout() {
-  try {
-    await fetch('/api/method/india_compliance.gst_india.api.portal_management.portal_logout', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json','X-Frappe-CSRF-Token': '{{ frappe.session.csrf_token }}','X-Requested-With':'XMLHttpRequest'},
-      body: JSON.stringify({})
-    });
-  } catch(e) {}
-  window.location.href = '/gst-login';
-}
-
-(async () => {
-  try {
-    const r = await fetch('/api/method/india_compliance.gst_india.api.portal_management.get_current_user_info');
-    const info = (await r.json()).message || {};
-    if (info.redirect_to_login) { window.location.href = '/gst-login'; return; }
-    if (info.email) document.getElementById('ud-email').textContent = info.email;
-    if (info.company_name) {
-      document.getElementById('ud-title').textContent = info.company_name;
-      document.getElementById('ud-company').textContent = info.company_name;
-    }
-    if (info.is_admin) {
-      document.getElementById('ud-role-badge').textContent = 'ADMIN';
-      document.getElementById('ud-role-badge').className = 'user-role-badge role-admin';
-    }
-    // If industry doesn't match this dashboard, redirect
-    if (info.industry_type && info.industry_type !== 'Manufacturing' && !info.is_admin) {
-      window.location.href = info.dashboard_url || '/gst-login';
-    }
-  } catch(e) {}
-})();
-</script>
+<script src="/assets/india_compliance/js/ud-shared.js"></script>
+<script>udInit('Manufacturing');</script>
 </body>
 </html>

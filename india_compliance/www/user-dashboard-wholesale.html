@@ -10,16 +10,19 @@
     .brand-dot{background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 0 10px var(--accent-glow)}
     .brand-type,.eyebrow,.stat-val,.sn.active,.gst-chip{color:var(--accent)}
     .hero{background:linear-gradient(120deg,rgba(45,212,191,.18),rgba(3,105,161,.1),rgba(0,0,0,0));border-color:rgba(45,212,191,.25)}
-    .hero-badge{background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 4px 16px var(--accent-glow)}
     .sn.active{background:rgba(45,212,191,.12);border:1px solid rgba(45,212,191,.25)}
     .ph-badge{background:rgba(45,212,191,.15);color:var(--accent);border-color:rgba(45,212,191,.3)}
     .gst-chip{background:rgba(45,212,191,.1);border-color:rgba(45,212,191,.25)}.gst-chip:hover{background:rgba(45,212,191,.2)}
-    .qa-btn{background:linear-gradient(135deg,var(--accent),var(--accent2))}
   </style>
-</head>
+  </head>
 <body>
+<a class="skip-link" href="#main-content">Skip to main content</a>
 <div class="page">
-  <aside class="sidebar">
+  <header class="topbar">
+    <div class="brand"><div class="brand-dot"></div><div><div class="brand-name">Fearoff AIAD</div><div class="brand-type">🚚 WHOLESALE</div></div></div>
+    <button type="button" class="menu-btn" id="menu-btn" aria-expanded="false" aria-controls="site-menu">☰ Menu</button>
+  </header>
+  <aside class="sidebar" id="site-menu" aria-label="Main menu">
     <div class="brand"><div class="brand-dot"></div><div><div class="brand-name">Fearoff AIAD</div><div class="brand-type">🚚 WHOLESALE</div></div></div>
     <nav class="sidebar-nav">
       <span class="sn-section">Workspace</span>
@@ -39,58 +42,57 @@
       <a href="/app/e-way-bill-log" class="sn">🚚 E-Way Bill</a>
       <a href="/app/accounting" class="sn">💰 Accounting</a>
       <span class="sn-section">Admin</span>
-      <a href="/admin-user-management" class="sn">⚙️ Admin Panel</a>
+      <a href="/admin-user-management" class="sn" data-admin-only hidden>⚙️ Admin Panel</a>
       <a href="/app" class="sn">📋 ERP Desk</a>
     </nav>
     <div class="sidebar-footer">
-      <div class="user-email" id="ud-email">Loading…</div>
+      <div class="user-role-badge role-user" id="ud-role-badge">USER</div>
+      <div class="user-email" id="ud-email">Signing you in…</div>
       <div class="user-company" id="ud-company">Wholesale Portal</div>
+      <button type="button" class="logout-btn" onclick="doLogout()">Log out</button>
     </div>
   </aside>
-  <main class="main">
+  <main class="main" id="main-content">
     <div class="hero">
       <div class="hero-left">
         <div class="eyebrow">Wholesale &amp; Distribution Workspace</div>
         <h1 id="ud-title">Welcome to your Dashboard</h1>
         <p id="ud-sub">Bulk orders, e-way bills, distributor pricing, stock management and GST compliance.</p>
       </div>
-      <span class="hero-badge">🚚 WHOLESALE</span>
-    </div>
-    <div class="stats-row">
-      <div class="stat-card"><div class="stat-val">📦</div><div class="stat-lbl">Bulk Orders</div></div>
-      <div class="stat-card"><div class="stat-val">🚚</div><div class="stat-lbl">E-Way Bills</div></div>
-      <div class="stat-card"><div class="stat-val">💲</div><div class="stat-lbl">Pricing</div></div>
-      <div class="stat-card"><div class="stat-val">📄</div><div class="stat-lbl">E-Invoice</div></div>
+      <div class="hero-actions">
+        <a class="btn-primary" href="/smart-billing">⚡ Create a bill</a>
+        <a class="btn-secondary" href="/gst-copilot">Ask GST Copilot</a>
+      </div>
     </div>
     <div class="panel">
       <div class="ph"><h2>Wholesale Modules</h2><span class="ph-badge">9 Active</span></div>
       <div class="mod-grid">
-        <div class="mod-card" style="border-top:3px solid #2dd4bf" onclick="go('/app/sales-order')">
+        <div class="mod-card" style="border-top:3px solid #2dd4bf">
           <div class="mod-icon">📦</div><div class="mod-name" style="color:#2dd4bf">Sales Orders</div>
           <div class="mod-desc">Capture bulk distributor and wholesale orders at scale.</div>
           <a class="mod-link" href="/app/sales-order" style="color:#2dd4bf">Open →</a>
         </div>
-        <div class="mod-card" style="border-top:3px solid #7c3aed" onclick="go('/app/purchase-order')">
+        <div class="mod-card" style="border-top:3px solid #7c3aed">
           <div class="mod-icon">🛒</div><div class="mod-name" style="color:#7c3aed">Purchase Orders</div>
           <div class="mod-desc">Manage inward stock procurement from suppliers.</div>
           <a class="mod-link" href="/app/purchase-order" style="color:#7c3aed">Open →</a>
         </div>
-        <div class="mod-card" style="border-top:3px solid #92400e" onclick="go('/app/e-way-bill-log')">
+        <div class="mod-card" style="border-top:3px solid #92400e">
           <div class="mod-icon">🚚</div><div class="mod-name" style="color:#92400e">E-Way Bill</div>
           <div class="mod-desc">Auto-generate and track e-way bills for bulk shipments.</div>
           <a class="mod-link" href="/app/e-way-bill-log" style="color:#92400e">Open →</a>
         </div>
-        <div class="mod-card" style="border-top:3px solid #4f46e5" onclick="go('/app/pricing-rule')">
+        <div class="mod-card" style="border-top:3px solid #4f46e5">
           <div class="mod-icon">💲</div><div class="mod-name" style="color:#4f46e5">Pricing Rules</div>
           <div class="mod-desc">Volume-based, distributor, and region-specific pricing.</div>
           <a class="mod-link" href="/app/pricing-rule" style="color:#4f46e5">Open →</a>
         </div>
-        <div class="mod-card" style="border-top:3px solid #15803d" onclick="go('/app/stock-ledger-entry')">
+        <div class="mod-card" style="border-top:3px solid #15803d">
           <div class="mod-icon">📦</div><div class="mod-name" style="color:#15803d">Stock Ledger</div>
           <div class="mod-desc">Track bulk inventory across multiple warehouses.</div>
           <a class="mod-link" href="/app/stock-ledger-entry" style="color:#15803d">Open →</a>
         </div>
-        <div class="mod-card" style="border-top:3px solid #0f766e" onclick="go('/app/e-invoice-log')">
+        <div class="mod-card" style="border-top:3px solid #0f766e">
           <div class="mod-icon">📄</div><div class="mod-name" style="color:#0f766e">E-Invoice</div>
           <div class="mod-desc">Bulk e-invoice generation for high-volume B2B transactions.</div>
           <a class="mod-link" href="/app/e-invoice-log" style="color:#0f766e">Open →</a>
@@ -119,15 +121,7 @@
     </div>
   </main>
 </div>
-<script>
-function go(u){window.location.href=u}
-(async()=>{
-  try{const r=await fetch('/api/method/india_compliance.gst_india.api.portal_management.get_user_dashboard_page');const d=(await r.json()).message||{};
-    if(d.company_name){document.getElementById('ud-title').textContent=d.company_name;document.getElementById('ud-company').textContent=d.company_name;}
-    if(d.industry_type&&d.industry_type!=='Wholesale'){window.location.href=d.dashboard_url||'/user-portal';}
-  }catch(e){}
-  try{const r2=await fetch('/api/method/frappe.auth.get_logged_user');const u=(await r2.json()).message;if(u)document.getElementById('ud-email').textContent=u;}catch(e){}
-})();
-</script>
+<script src="/assets/india_compliance/js/ud-shared.js"></script>
+<script>udInit('Wholesale');</script>
 </body>
 </html>

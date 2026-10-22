@@ -1,264 +1,331 @@
 <div class="far-wrap">
+  <a class="far-skip" href="#far-main">Skip to form</a>
 
-  <nav class="far-nav">
-    <a class="far-brand" href="/user-portal"><span class="far-dot"></span>Fearoff AIAD</a>
-    <div class="far-navlinks">
-      <a class="far-nl" href="/user-portal">🏠 Home</a>
-      <a class="far-nl" href="/gst-copilot">🤖 GST Copilot</a>
-      <a class="far-nl" href="/smart-billing">⚡ Smart Billing</a>
-      <a class="far-nl far-active" href="/user-register">➕ Register</a>
-      <a class="far-nl" href="/app">📋 ERP Desk</a>
-    </div>
+  <nav class="far-nav" aria-label="Site">
+    <a class="far-brand" href="/gst-login"><span class="far-dot" aria-hidden="true"></span>Fearoff AIAD</a>
+    <a class="far-nl" href="/gst-login">Sign in</a>
   </nav>
 
-  <div class="far-card">
-    <div class="far-head">
-      <div class="far-head-icon">🏢</div>
+  <main class="far-card" id="far-main">
+    <header class="far-head">
+      <div class="far-head-icon" aria-hidden="true">🏢</div>
       <div>
-        <h1 class="far-h1">Create Your Business Account</h1>
-        <p class="far-sub">Register and get a personalized GST-compliant workspace for your business type</p>
+        <h1 class="far-h1" id="far-title" tabindex="-1">Create your business account</h1>
+        <p class="far-sub">Two quick steps. You'll land on a workspace set up for your type of business.</p>
       </div>
-    </div>
+    </header>
 
     <div class="far-body">
-      <!-- Step 1: Industry Type Selector -->
-      <div id="step-1" class="far-step">
-        <p class="far-step-label">Step 1 of 2 — Choose Your Business Type</p>
-        <div class="industry-grid" id="industry-grid">
-          <button type="button" class="ind-card" data-value="Manufacturing" onclick="selectIndustry(this)">
-            <span class="ind-icon">🏭</span>
-            <strong>Manufacturing</strong>
+      <ol class="far-steps" aria-label="Progress">
+        <li id="dot-1" class="is-current" aria-current="step"><span>1</span> Business type</li>
+        <li id="dot-2"><span>2</span> Your details</li>
+      </ol>
+
+      <!-- Step 1 -->
+      <section id="step-1" class="far-step" aria-labelledby="step-1-h">
+        <h2 class="far-h2" id="step-1-h">What kind of business do you run?</h2>
+        <p class="far-hint" id="ind-hint">Pick the closest match. You can change what you see later.</p>
+        <div class="industry-grid" id="industry-grid" role="radiogroup" aria-labelledby="step-1-h" aria-describedby="ind-hint">
+          <button type="button" class="ind-card" role="radio" aria-checked="false" data-value="Manufacturing">
+            <span class="ind-icon" aria-hidden="true">🏭</span><strong>Manufacturing</strong>
             <small>Production, BOM, quality control, work orders</small>
           </button>
-          <button type="button" class="ind-card" data-value="Sales" onclick="selectIndustry(this)">
-            <span class="ind-icon">🏷️</span>
-            <strong>Sales</strong>
-            <small>CRM, leads, sales orders, customer management</small>
+          <button type="button" class="ind-card" role="radio" aria-checked="false" data-value="Sales">
+            <span class="ind-icon" aria-hidden="true">🏷️</span><strong>Sales</strong>
+            <small>CRM, leads, sales orders, customers</small>
           </button>
-          <button type="button" class="ind-card" data-value="Service" onclick="selectIndustry(this)">
-            <span class="ind-icon">🎧</span>
-            <strong>Service</strong>
-            <small>Tickets, projects, timesheets, HR management</small>
+          <button type="button" class="ind-card" role="radio" aria-checked="false" data-value="Service">
+            <span class="ind-icon" aria-hidden="true">🎧</span><strong>Service</strong>
+            <small>Tickets, projects, timesheets, HR</small>
           </button>
-          <button type="button" class="ind-card" data-value="Retail" onclick="selectIndustry(this)">
-            <span class="ind-icon">🛍️</span>
-            <strong>Retail</strong>
+          <button type="button" class="ind-card" role="radio" aria-checked="false" data-value="Retail">
+            <span class="ind-icon" aria-hidden="true">🛍️</span><strong>Retail</strong>
             <small>POS, inventory, pricing rules, storefront</small>
           </button>
-          <button type="button" class="ind-card" data-value="Wholesale" onclick="selectIndustry(this)">
-            <span class="ind-icon">🚚</span>
-            <strong>Wholesale / Distribution</strong>
-            <small>Bulk orders, e-way bills, distributors, pricing</small>
+          <button type="button" class="ind-card" role="radio" aria-checked="false" data-value="Wholesale">
+            <span class="ind-icon" aria-hidden="true">🚚</span><strong>Wholesale / Distribution</strong>
+            <small>Bulk orders, e-way bills, distributors</small>
           </button>
-          <button type="button" class="ind-card" data-value="Other" onclick="selectIndustry(this)">
-            <span class="ind-icon">🌐</span>
-            <strong>Other Business</strong>
+          <button type="button" class="ind-card" role="radio" aria-checked="false" data-value="Other">
+            <span class="ind-icon" aria-hidden="true">🌐</span><strong>Other business</strong>
             <small>General GST compliance and ERP tools</small>
           </button>
         </div>
-        <input type="hidden" id="selected-industry" value="" />
-        <button type="button" id="step1-next" class="far-submit" disabled onclick="goStep2()">Continue →</button>
-      </div>
+        <button type="button" id="step1-next" class="far-submit" disabled aria-describedby="step1-why">Continue</button>
+        <p class="far-hint" id="step1-why">Choose a business type to continue.</p>
+      </section>
 
-      <!-- Step 2: Account Details -->
-      <div id="step-2" class="far-step" style="display:none">
-        <p class="far-step-label">Step 2 of 2 — Business Details
-          <button type="button" class="back-btn" onclick="goStep1()">← Change Type</button>
-        </p>
-        <div id="selected-type-badge" class="type-badge"></div>
+      <!-- Step 2 -->
+      <section id="step-2" class="far-step" hidden aria-labelledby="step-2-h">
+        <div class="far-step2-head">
+          <h2 class="far-h2" id="step-2-h" tabindex="-1">Your details</h2>
+          <button type="button" class="back-btn" id="back-btn">Change business type</button>
+        </div>
+        <p id="selected-type-badge" class="type-badge"></p>
 
-        <form id="far-form" class="far-form">
+        <div id="far-result" class="far-result" role="alert" aria-live="assertive" tabindex="-1"></div>
+
+        <form id="far-form" class="far-form" novalidate>
           <div class="far-row2">
             <div class="far-field">
-              <label class="far-label">Full Name</label>
-              <input class="far-input" type="text" name="full_name" id="full_name" placeholder="Param Logaa" required/>
+              <label class="far-label" for="full_name">Your full name</label>
+              <input class="far-input" type="text" name="full_name" id="full_name" autocomplete="name" required aria-describedby="err-full_name"/>
+              <p class="far-err" id="err-full_name"></p>
             </div>
             <div class="far-field">
-              <label class="far-label">Email Address</label>
-              <input class="far-input" type="email" name="email" id="email" placeholder="param@company.com" required/>
+              <label class="far-label" for="email">Work email</label>
+              <input class="far-input" type="email" name="email" id="email" autocomplete="email" inputmode="email" required aria-describedby="hint-email err-email"/>
+              <p class="far-hint" id="hint-email">You'll use this to sign in.</p>
+              <p class="far-err" id="err-email"></p>
             </div>
           </div>
+
           <div class="far-row2">
             <div class="far-field">
-              <label class="far-label">Password</label>
-              <input class="far-input" type="password" name="password" id="password" placeholder="Min 8 characters" required/>
+              <label class="far-label" for="company_name">Company name</label>
+              <input class="far-input" type="text" name="company_name" id="company_name" autocomplete="organization" required aria-describedby="err-company_name"/>
+              <p class="far-err" id="err-company_name"></p>
             </div>
             <div class="far-field">
-              <label class="far-label">Company Name</label>
-              <input class="far-input" type="text" name="company_name" id="company_name" placeholder="Acme Pvt. Ltd." required/>
+              <label class="far-label" for="website_slug">Short company ID</label>
+              <input class="far-input" type="text" name="website_slug" id="website_slug" autocapitalize="none" spellcheck="false" required aria-describedby="hint-slug err-website_slug"/>
+              <p class="far-hint" id="hint-slug">Filled in from your company name. Lowercase letters, numbers and hyphens.</p>
+              <p class="far-err" id="err-website_slug"></p>
             </div>
           </div>
+
           <div class="far-field">
-            <label class="far-label">Website Slug <span style="font-weight:400;text-transform:none;letter-spacing:0">(unique short ID, e.g. <code>acme-mfg</code>)</span></label>
-            <input class="far-input" type="text" name="website_slug" id="website_slug" placeholder="acme-mfg" required pattern="[a-z0-9\-]+" title="Lowercase letters, numbers and hyphens only"/>
+            <label class="far-label" for="password">Password</label>
+            <div class="far-pw">
+              <input class="far-input" type="password" name="password" id="password" autocomplete="new-password" required minlength="8" aria-describedby="hint-password err-password"/>
+              <button type="button" class="far-pw-toggle" id="pw-toggle" aria-controls="password" aria-pressed="false">Show</button>
+            </div>
+            <p class="far-hint" id="hint-password">At least 8 characters.</p>
+            <p class="far-err" id="err-password"></p>
           </div>
+
           <input type="hidden" name="industry_type" id="industry_type_field" />
-          <button type="submit" class="far-submit" id="far-submit-btn">Create Account →</button>
+          <button type="submit" class="far-submit" id="far-submit-btn">Create account</button>
         </form>
-        <div id="far-result" class="far-result"></div>
-        <p class="far-login-link">Already have an account? <a href="/login?redirect-to=/user-portal">Sign in here</a></p>
-      </div>
+        <p class="far-login-link">Already have an account? <a href="/gst-login">Sign in</a></p>
+      </section>
     </div>
-  </div>
-
-  <div class="far-tip">
-    <span>📋</span>
-    <span><strong>How it works:</strong> Choose your business type → fill your company details → get a personalised dashboard with industry-specific GST tools.</span>
-  </div>
-
+  </main>
 </div>
 
 <style>
+/* Contrast (measured): body #f1f5f9 on #1b2733 = 13:1; hints #a9b8c9 = 7.2:1; placeholder-free labels;
+   primary button #0b1117 on #2dd4bf = 10.2:1; errors #fca5a5 = 7.7:1; links #2dd4bf = 7.9:1. */
 .far-wrap *{box-sizing:border-box}
-.far-wrap{
-  font-family:'Inter','Segoe UI',sans-serif;
-  background:linear-gradient(135deg,#0f172a 0%,#134e4a 60%,#0f172a 100%);
-  min-height:90vh;display:flex;flex-direction:column;align-items:center;
-  padding:1.5rem 1rem 2rem;
-  margin:-1rem -15px -15px;
-}
+.far-wrap{font-family:'Inter','Segoe UI',sans-serif;background:linear-gradient(135deg,#0f172a 0%,#134e4a 60%,#0f172a 100%);min-height:90vh;display:flex;flex-direction:column;align-items:center;padding:1.5rem 1rem 2rem;margin:-1rem -15px -15px;color:#f1f5f9}
+.far-skip{position:absolute;left:-999px;top:0;background:#fff;color:#0b1117;padding:.6rem 1rem;font-weight:700;z-index:10}
+.far-skip:focus{left:0}
+.far-wrap a:focus-visible,.far-wrap button:focus-visible,.far-wrap input:focus-visible,.far-wrap [tabindex]:focus-visible{outline:3px solid #fff;outline-offset:2px;box-shadow:0 0 0 5px #0d9488}
+.far-wrap [hidden]{display:none!important}
 
 .far-nav{width:100%;max-width:760px;display:flex;align-items:center;justify-content:space-between;margin-bottom:1.4rem}
-.far-brand{display:flex;align-items:center;gap:.5rem;text-decoration:none;color:#f0fdfa;font-size:.95rem;font-weight:700}
-.far-dot{width:9px;height:9px;border-radius:50%;background:linear-gradient(135deg,#2dd4bf,#0ea5e9);box-shadow:0 0 8px #2dd4bf80;flex-shrink:0}
-.far-navlinks{display:flex;gap:.4rem;flex-wrap:wrap}
-.far-nl{text-decoration:none;padding:.36rem .8rem;border-radius:999px;font-size:.78rem;font-weight:600;border:1px solid rgba(255,255,255,.14);color:#94a3b8;transition:all .2s}
-.far-nl:hover,.far-active{background:rgba(45,212,191,.15);border-color:#2dd4bf;color:#2dd4bf}
+.far-brand{display:flex;align-items:center;gap:.5rem;text-decoration:none;color:#f0fdfa;font-size:.98rem;font-weight:700}
+.far-dot{width:9px;height:9px;border-radius:50%;background:linear-gradient(135deg,#2dd4bf,#0ea5e9);flex-shrink:0}
+.far-nl{display:inline-flex;align-items:center;min-height:44px;text-decoration:none;padding:.4rem 1rem;border-radius:999px;font-size:.88rem;font-weight:600;border:1px solid #2dd4bf;color:#2dd4bf}
+.far-nl:hover{background:rgba(45,212,191,.15)}
 
-.far-card{width:100%;max-width:760px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:20px;overflow:hidden;box-shadow:0 24px 56px rgba(0,0,0,.45)}
-.far-head{padding:1.3rem 1.6rem;background:linear-gradient(120deg,rgba(15,118,110,.55),rgba(6,78,59,.65));border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:.9rem}
+.far-card{width:100%;max-width:760px;background:#1b2733;border:1px solid rgba(255,255,255,.14);border-radius:20px;overflow:hidden;box-shadow:0 24px 56px rgba(0,0,0,.45)}
+.far-head{padding:1.3rem 1.6rem;background:linear-gradient(120deg,#0f4f4a,#064e3b);border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:.9rem}
 .far-head-icon{width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,#2dd4bf,#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0}
-.far-h1{color:#f0fdfa;font-size:1.15rem;font-weight:700;margin:0 0 .2rem}
-.far-sub{color:#99f6e4;font-size:.83rem;margin:0}
+.far-h1{color:#f0fdfa;font-size:1.2rem;font-weight:700;margin:0 0 .2rem}
+.far-sub{color:#ccfbf1;font-size:.88rem;margin:0}
 .far-body{padding:1.6rem}
+.far-h2{font-size:1.05rem;font-weight:700;margin:0 0 .3rem;color:#f1f5f9}
 
-/* Step indicator */
-.far-step-label{font-size:.82rem;color:#64748b;font-weight:600;margin-bottom:1rem;display:flex;align-items:center;gap:.7rem}
-.back-btn{background:none;border:1px solid rgba(255,255,255,.15);color:#94a3b8;border-radius:6px;padding:.2rem .6rem;cursor:pointer;font-size:.78rem;font-family:inherit;transition:all .2s}
+/* Progress */
+.far-steps{display:flex;gap:1.2rem;list-style:none;margin:0 0 1.3rem;padding:0;font-size:.86rem;color:#a9b8c9;font-weight:600}
+.far-steps li{display:flex;align-items:center;gap:.5rem}
+.far-steps span{width:26px;height:26px;border-radius:50%;border:2px solid #a9b8c9;display:inline-flex;align-items:center;justify-content:center;font-size:.8rem}
+.far-steps .is-current{color:#fff}
+.far-steps .is-current span{background:#2dd4bf;border-color:#2dd4bf;color:#0b1117}
+.far-steps .is-done span{background:#2dd4bf;border-color:#2dd4bf;color:#0b1117}
+
+.far-hint{font-size:.82rem;color:#a9b8c9;margin:.25rem 0 0}
+.far-step2-head{display:flex;align-items:center;justify-content:space-between;gap:.7rem;flex-wrap:wrap}
+.back-btn{min-height:44px;background:none;border:1px solid #a9b8c9;color:#e2e8f0;border-radius:8px;padding:.3rem .9rem;cursor:pointer;font-size:.84rem;font-family:inherit}
 .back-btn:hover{border-color:#2dd4bf;color:#2dd4bf}
 
-/* Industry type grid */
-.industry-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.85rem;margin-bottom:1.2rem}
-.ind-card{background:rgba(255,255,255,.05);border:2px solid rgba(255,255,255,.1);border-radius:14px;padding:1rem .85rem;cursor:pointer;font-family:inherit;text-align:left;transition:all .22s;display:flex;flex-direction:column;gap:.3rem}
-.ind-card:hover{border-color:#2dd4bf;background:rgba(45,212,191,.08);transform:translateY(-2px)}
-.ind-card.selected{border-color:#2dd4bf;background:rgba(45,212,191,.13);box-shadow:0 0 0 3px rgba(45,212,191,.18);transform:translateY(-2px)}
-.ind-icon{font-size:1.6rem;margin-bottom:.15rem}
-.ind-card strong{color:#f1f5f9;font-size:.92rem}
-.ind-card small{color:#64748b;font-size:.77rem;line-height:1.4}
-.ind-card.selected strong{color:#2dd4bf}
+/* Industry cards */
+.industry-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.85rem;margin:1rem 0 1.2rem}
+.ind-card{background:#223140;border:2px solid rgba(255,255,255,.18);border-radius:14px;padding:1rem .85rem;min-height:44px;cursor:pointer;font-family:inherit;text-align:left;display:flex;flex-direction:column;gap:.3rem;color:#f1f5f9;transition:border-color .2s,background .2s}
+.ind-card:hover{border-color:#2dd4bf}
+.ind-card[aria-checked="true"]{border-color:#2dd4bf;background:#164e4a}
+.ind-card[aria-checked="true"] strong::after{content:" ✓";color:#2dd4bf}
+.ind-icon{font-size:1.6rem}
+.ind-card small{color:#b8c6d6;font-size:.8rem;line-height:1.4}
 
-/* Selected badge */
-.type-badge{display:inline-flex;align-items:center;gap:.5rem;background:rgba(45,212,191,.13);border:1px solid rgba(45,212,191,.3);border-radius:999px;padding:.4rem 1rem;color:#2dd4bf;font-size:.85rem;font-weight:700;margin-bottom:1.1rem}
+.type-badge{display:inline-flex;align-items:center;gap:.5rem;background:#164e4a;border:1px solid #2dd4bf;border-radius:999px;padding:.35rem 1rem;color:#ccfbf1;font-size:.88rem;font-weight:700;margin:.4rem 0 1.1rem}
 
 /* Form */
 .far-form{display:flex;flex-direction:column;gap:1.1rem}
 .far-row2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
-.far-field{display:flex;flex-direction:column;gap:.38rem}
-.far-label{font-size:.76rem;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.05em}
-.far-input{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:.68rem .9rem;color:#f1f5f9;font-family:inherit;font-size:.9rem;outline:none;transition:border-color .2s}
-.far-input:focus{border-color:#2dd4bf;background:rgba(45,212,191,.05)}
-.far-input::placeholder{color:#475569}
-.far-submit{width:100%;padding:.85rem;border:none;border-radius:11px;background:linear-gradient(135deg,#0d9488,#0369a1);color:#fff;font-family:inherit;font-size:.97rem;font-weight:700;cursor:pointer;letter-spacing:.02em;transition:all .2s;box-shadow:0 4px 18px rgba(13,148,136,.34);margin-top:.3rem}
-.far-submit:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 7px 26px rgba(13,148,136,.48)}
-.far-submit:disabled{opacity:.45;cursor:not-allowed;transform:none}
-.far-result{margin-top:.9rem;padding:.8rem .95rem;border-radius:9px;font-size:.88rem;display:none}
-.far-result.err{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#fca5a5;display:block}
-.far-result.ok{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:#86efac;display:block}
-.far-login-link{margin-top:1.1rem;text-align:center;font-size:.86rem;color:#64748b}
-.far-login-link a{color:#2dd4bf;text-decoration:none;font-weight:600}
-.far-tip{width:100%;max-width:760px;margin-top:.9rem;background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:12px;padding:.7rem 1.1rem;display:flex;align-items:flex-start;gap:.7rem;color:#fde68a;font-size:.82rem;line-height:1.55}
-.far-tip strong{color:#fbbf24}
-.far-tip code{background:rgba(255,255,255,.08);padding:0 4px;border-radius:4px}
-@media(max-width:620px){.far-row2{grid-template-columns:1fr}.far-navlinks{display:none}.industry-grid{grid-template-columns:1fr 1fr}}
-@media(max-width:440px){.industry-grid{grid-template-columns:1fr}}
+.far-field{display:flex;flex-direction:column;gap:.3rem;min-width:0}
+.far-label{font-size:.88rem;font-weight:600;color:#e2e8f0}
+.far-input{width:100%;min-height:44px;background:#0f1923;border:1px solid #8294a8;border-radius:10px;padding:.65rem .9rem;color:#f1f5f9;font-family:inherit;font-size:1rem}
+.far-input[aria-invalid="true"]{border-color:#fca5a5;border-width:2px}
+.far-pw{position:relative;display:flex}
+.far-pw .far-input{padding-right:5rem}
+.far-pw-toggle{position:absolute;right:4px;top:4px;bottom:4px;min-width:64px;border:0;border-radius:8px;background:#223140;color:#e2e8f0;font-family:inherit;font-weight:600;font-size:.84rem;cursor:pointer}
+.far-err{display:none;margin:0;font-size:.84rem;color:#fca5a5;font-weight:600}
+.far-err.show{display:block}
+.far-err.show::before{content:"⚠ "}
+.far-submit{width:100%;min-height:48px;padding:.8rem;border:0;border-radius:11px;background:#2dd4bf;color:#0b1117;font-family:inherit;font-size:1rem;font-weight:800;cursor:pointer}
+.far-submit:hover:not(:disabled){filter:brightness(1.08)}
+.far-submit:disabled{background:#3a4a5a;color:#cbd5e1;cursor:not-allowed}
+.far-result{margin:0 0 1rem;padding:.8rem .95rem;border-radius:9px;font-size:.92rem;display:none}
+.far-result.err{background:#3b1d1f;border:1px solid #fca5a5;color:#fecaca;display:block}
+.far-result.ok{background:#12372a;border:1px solid #86efac;color:#bbf7d0;display:block}
+.far-login-link{margin-top:1.1rem;text-align:center;font-size:.92rem;color:#cbd5e1}
+.far-login-link a{color:#2dd4bf;font-weight:600}
+
+@media(max-width:620px){.far-row2{grid-template-columns:1fr}.industry-grid{grid-template-columns:1fr 1fr}.far-head{align-items:flex-start}}
+@media(max-width:440px){.industry-grid{grid-template-columns:1fr}.far-body{padding:1.1rem}}
+@media(prefers-reduced-motion:reduce){.far-wrap *{transition:none!important}}
 </style>
 
 <script>
-(function(){
-  // Industry type metadata for the badge
-  const IND_META = {
-    Manufacturing: { icon:'🏭', label:'Manufacturing' },
-    Sales:         { icon:'🏷️', label:'Sales' },
-    Service:       { icon:'🎧', label:'Service' },
-    Retail:        { icon:'🛍️', label:'Retail' },
-    Wholesale:     { icon:'🚚', label:'Wholesale / Distribution' },
-    Other:         { icon:'🌐', label:'Other Business' },
+(function () {
+  var META = {
+    Manufacturing: ['🏭', 'Manufacturing'], Sales: ['🏷️', 'Sales'], Service: ['🎧', 'Service'],
+    Retail: ['🛍️', 'Retail'], Wholesale: ['🚚', 'Wholesale / Distribution'], Other: ['🌐', 'Other business']
   };
+  var $ = function (id) { return document.getElementById(id); };
+  var cards = Array.prototype.slice.call(document.querySelectorAll('.ind-card'));
+  var next = $('step1-next'), why = $('step1-why');
+  var form = $('far-form'), result = $('far-result'), btn = $('far-submit-btn');
+  var slugTouched = false, industry = '';
 
-  window.selectIndustry = function(el) {
-    document.querySelectorAll('.ind-card').forEach(c => c.classList.remove('selected'));
-    el.classList.add('selected');
-    const val = el.dataset.value;
-    document.getElementById('selected-industry').value = val;
-    document.getElementById('step1-next').disabled = false;
-  };
-
-  window.goStep2 = function() {
-    const val = document.getElementById('selected-industry').value;
-    if (!val) return;
-    document.getElementById('industry_type_field').value = val;
-    const meta = IND_META[val] || { icon:'🌐', label: val };
-    document.getElementById('selected-type-badge').innerHTML =
-      `<span style="font-size:1.2rem">${meta.icon}</span> ${meta.label}`;
-    document.getElementById('step-1').style.display = 'none';
-    document.getElementById('step-2').style.display = 'block';
-  };
-
-  window.goStep1 = function() {
-    document.getElementById('step-2').style.display = 'none';
-    document.getElementById('step-1').style.display = 'block';
-  };
-
-  // Form submission
-  const form = document.getElementById('far-form');
-  const result = document.getElementById('far-result');
-  const btn = document.getElementById('far-submit-btn');
-
-  if (form) {
-    form.addEventListener('submit', async e => {
+  /* ---- Step 1: choose a business type (arrow keys move the choice, like a radio group) ---- */
+  function choose(card) {
+    cards.forEach(function (c) { c.setAttribute('aria-checked', c === card ? 'true' : 'false'); c.tabIndex = c === card ? 0 : -1; });
+    industry = card.dataset.value;
+    next.disabled = false;
+    why.textContent = META[industry][1] + ' selected.';
+  }
+  cards.forEach(function (c, i) {
+    c.tabIndex = i === 0 ? 0 : -1;
+    c.addEventListener('click', function () { choose(c); });
+    c.addEventListener('keydown', function (e) {
+      var d = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+      if (!d) return;
       e.preventDefault();
-      btn.disabled = true; btn.textContent = 'Creating account…';
-      result.className = 'far-result'; result.textContent = '';
+      var n = cards[(i + d + cards.length) % cards.length];
+      n.focus(); choose(n);
+    });
+  });
 
-      const data = Object.fromEntries(new FormData(form));
-      const csrfToken = (typeof frappe !== 'undefined' && frappe.csrf_token)
-        ? frappe.csrf_token
-        : (document.cookie.match(/csrf_token=([^;]+)/) || [])[1] || 'no-token';
+  function show(step) {
+    $('step-1').hidden = step !== 1;
+    $('step-2').hidden = step !== 2;
+    $('dot-1').className = step === 1 ? 'is-current' : 'is-done';
+    $('dot-2').className = step === 2 ? 'is-current' : '';
+    $('dot-1').removeAttribute('aria-current'); $('dot-2').removeAttribute('aria-current');
+    $(step === 1 ? 'dot-1' : 'dot-2').setAttribute('aria-current', 'step');
+    (step === 1 ? (cards.filter(function (c) { return c.tabIndex === 0; })[0]) : $('step-2-h')).focus();
+  }
+  next.addEventListener('click', function () {
+    if (!industry) return;
+    $('industry_type_field').value = industry;
+    $('selected-type-badge').textContent = META[industry][0] + ' ' + META[industry][1];
+    show(2);
+    $('full_name').focus();
+  });
+  $('back-btn').addEventListener('click', function () { show(1); });
 
+  /* ---- Step 2: fill the short ID from the company name until the user edits it ---- */
+  function slugify(s) { return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40); }
+  $('company_name').addEventListener('input', function () { if (!slugTouched) $('website_slug').value = slugify(this.value); });
+  $('website_slug').addEventListener('input', function () { slugTouched = true; });
+
+  $('pw-toggle').addEventListener('click', function () {
+    var p = $('password'), shown = p.type === 'text';
+    p.type = shown ? 'password' : 'text';
+    this.textContent = shown ? 'Show' : 'Hide';
+    this.setAttribute('aria-pressed', shown ? 'false' : 'true');
+  });
+
+  /* ---- Validation: say what is wrong next to the field and how to fix it ---- */
+  var RULES = {
+    full_name: function (v) { return v.trim() ? '' : 'Enter your full name.'; },
+    email: function (v) { return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v) ? '' : 'Enter an email like name@company.com.'; },
+    company_name: function (v) { return v.trim() ? '' : 'Enter your company name.'; },
+    website_slug: function (v) { return /^[a-z0-9]+(-[a-z0-9]+)*$/.test(v) ? '' : 'Use lowercase letters, numbers and single hyphens, for example acme-mfg.'; },
+    password: function (v) { return v.length >= 8 ? '' : 'Use at least 8 characters.'; }
+  };
+  function setErr(name, msg) {
+    var inp = $(name), e = $('err-' + name);
+    e.textContent = msg; e.classList.toggle('show', !!msg);
+    if (msg) inp.setAttribute('aria-invalid', 'true'); else inp.removeAttribute('aria-invalid');
+  }
+  Object.keys(RULES).forEach(function (n) {
+    $(n).addEventListener('blur', function () { if (this.value) setErr(n, RULES[n](this.value)); });
+    $(n).addEventListener('input', function () { if (this.getAttribute('aria-invalid')) setErr(n, RULES[n](this.value)); });
+  });
+  function validate() {
+    var first = null;
+    Object.keys(RULES).forEach(function (n) {
+      var m = RULES[n]($(n).value); setErr(n, m);
+      if (m && !first) first = $(n);
+    });
+    if (first) first.focus();
+    return !first;
+  }
+
+  function message(payload) {
+    var msg = payload.message && typeof payload.message === 'string' ? payload.message : '';
+    if (payload._server_messages) {
       try {
-        const resp = await fetch('/api/method/india_compliance.gst_india.api.portal_management.register_portal_user', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'X-Frappe-CSRF-Token': csrfToken,
-            'X-Requested-With': 'XMLHttpRequest'
-          },
-          body: new URLSearchParams(data).toString()
-        });
-
-        const payload = await resp.json();
-
-        if (!resp.ok || payload.exc_type) {
-          let msg = payload.message || payload.exception || 'Unable to create account.';
-          if (payload._server_messages) {
-            try { const sm = JSON.parse(payload._server_messages); if (Array.isArray(sm) && sm.length) msg = sm[0]; } catch {}
-          }
-          result.className = 'far-result err';
-          result.textContent = String(msg).replace(/[\[\]"]/g, '');
-          btn.disabled = false; btn.textContent = 'Create Account →'; return;
-        }
-
-        const dashUrl = payload.message?.dashboard_url || payload.message?.login_url || '/login?redirect-to=/user-portal';
-        result.className = 'far-result ok';
-        result.textContent = '✓ Account created! Redirecting to your personalised dashboard…';
-        setTimeout(() => { window.location.href = dashUrl; }, 1800);
-
-      } catch(err) {
-        result.className = 'far-result err';
-        result.textContent = 'Request failed: ' + err.message;
-        btn.disabled = false; btn.textContent = 'Create Account →';
-      }
+        var sm = JSON.parse(payload._server_messages);
+        if (sm.length) { var m = JSON.parse(sm[0]); msg = (m.message || '').replace(/<[^>]+>/g, ''); }
+      } catch (e) {}
+    }
+    return msg || 'We could not create your account. Please try again.';
+  }
+  function fail(text) {
+    result.className = 'far-result err'; result.textContent = text; result.focus();
+    btn.disabled = false; btn.textContent = 'Create account';
+  }
+  function csrf() {
+    return (window.frappe && frappe.csrf_token) || ((document.cookie.match(/csrf_token=([^;]+)/) || [])[1]) || '';
+  }
+  function post(url, data) {
+    return fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Frappe-CSRF-Token': csrf(), 'X-Requested-With': 'XMLHttpRequest' },
+      body: new URLSearchParams(data).toString()
     });
   }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    result.className = 'far-result'; result.textContent = '';
+    if (!validate()) return;
+    btn.disabled = true; btn.textContent = 'Creating your account…';
+    var data = Object.fromEntries(new FormData(form));
+    data.email = data.email.trim().toLowerCase();
+
+    post('/api/method/india_compliance.gst_india.api.portal_management.register_portal_user', data)
+      .then(function (resp) { return resp.json().then(function (p) { return { ok: resp.ok, p: p }; }); })
+      .then(function (r) {
+        if (!r.ok || r.p.exc_type) {
+          var t = message(r.p);
+          if (/already exists/i.test(t)) { setErr('email', 'An account with this email already exists. Sign in instead.'); $('email').focus(); }
+          return fail(t);
+        }
+        var dest = (r.p.message && r.p.message.dashboard_url) || '/gst-login';
+        result.className = 'far-result ok';
+        result.textContent = 'Account created. Signing you in…';
+        // Sign in with the details just entered so the user never has to type them again.
+        return post('/api/method/login', { usr: data.email, pwd: data.password }).then(function (lr) {
+          window.location.href = lr.ok ? dest : '/gst-login';
+        });
+      })
+      .catch(function () { fail('Could not reach the server. Check your connection and try again.'); });
+  });
 })();
 </script>
